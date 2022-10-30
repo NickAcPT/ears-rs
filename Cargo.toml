@@ -1,0 +1,9 @@
+[package]
+name = "ears-rs"
+description = "A Rust based library to read Ears mod data from Minecraft skins"
+version = "0.1.0"
+edition = "2021"
+authors = ["NickAcPT"]
+
+[dependencies]
+image = { version = "0.24.4", default-features = false, features = ["png"] }
