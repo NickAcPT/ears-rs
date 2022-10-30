@@ -7,3 +7,4 @@ authors = ["NickAcPT"]
 
 [dependencies]
 image = { version = "0.24.4", default-features = false, features = ["png"] }
+ibig = "0.3.6"

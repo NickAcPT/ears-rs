@@ -3,7 +3,7 @@ macro_rules! read_magic_pixel {
          {
             use crate::parser::utils::to_argb_hex;
 
-            to_argb_hex($image.get_pixel($idx % 4, 32 + ($idx / 4)).0)
+            to_argb_hex($image.get_pixel($idx % 4, 32 + ($idx / 4)))
          }
      };
 
@@ -15,7 +15,7 @@ macro_rules! read_magic_pixel {
         {
             use crate::parser::utils::to_argb_hex;
 
-            let pixel = to_argb_hex($image.get_pixel($idx % 4, 32 + ($idx / 4)).0);
+            let pixel = to_argb_hex($image.get_pixel($idx % 4, 32 + ($idx / 4)));
             let magic_pixel = MagicPixelsV0::get_by_argb_hex(pixel);
 
             if $relevant {

@@ -12,7 +12,7 @@ pub(crate) trait EarsFeaturesParser {
     fn detect_magic_pixel() -> i32;
 
     fn detect(image: &RgbaImage) -> bool {
-        let magic_pixel = image.get_pixel(0, 32).0;
+        let magic_pixel = image.get_pixel(0, 32);
         let magic_pixel = to_argb_hex(magic_pixel);
 
         magic_pixel == Self::detect_magic_pixel()
