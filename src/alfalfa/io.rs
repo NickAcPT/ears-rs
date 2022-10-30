@@ -1,20 +1,70 @@
-use std::ops::{BitOr, Shl};
-use ibig::{UBig, ubig};
-use image::RgbaImage;
 use crate::parser::utils::to_argb_hex;
 use crate::utils::model::{AlfafaData, Rectangle};
+use ibig::{ubig, UBig};
+use image::RgbaImage;
+use std::ops::{BitOr, Shl};
 
 pub(crate) const ENCODE_REGIONS: [Rectangle; 10] = [
-    Rectangle { x1: 8, y1: 0, x2: 24, y2: 8 },
-    Rectangle { x1: 0, y1: 8, x2: 8, y2: 16 },
-    Rectangle { x1: 16, y1: 8, x2: 32, y2: 16 },
-    Rectangle { x1: 4, y1: 16, x2: 12, y2: 20 },
-    Rectangle { x1: 20, y1: 16, x2: 36, y2: 20 },
-    Rectangle { x1: 44, y1: 16, x2: 52, y2: 20 },
-    Rectangle { x1: 0, y1: 20, x2: 56, y2: 32 },
-    Rectangle { x1: 20, y1: 48, x2: 28, y2: 52 },
-    Rectangle { x1: 36, y1: 48, x2: 44, y2: 52 },
-    Rectangle { x1: 16, y1: 52, x2: 48, y2: 64 },
+    Rectangle {
+        x1: 8,
+        y1: 0,
+        x2: 24,
+        y2: 8,
+    },
+    Rectangle {
+        x1: 0,
+        y1: 8,
+        x2: 8,
+        y2: 16,
+    },
+    Rectangle {
+        x1: 16,
+        y1: 8,
+        x2: 32,
+        y2: 16,
+    },
+    Rectangle {
+        x1: 4,
+        y1: 16,
+        x2: 12,
+        y2: 20,
+    },
+    Rectangle {
+        x1: 20,
+        y1: 16,
+        x2: 36,
+        y2: 20,
+    },
+    Rectangle {
+        x1: 44,
+        y1: 16,
+        x2: 52,
+        y2: 20,
+    },
+    Rectangle {
+        x1: 0,
+        y1: 20,
+        x2: 56,
+        y2: 32,
+    },
+    Rectangle {
+        x1: 20,
+        y1: 48,
+        x2: 28,
+        y2: 52,
+    },
+    Rectangle {
+        x1: 36,
+        y1: 48,
+        x2: 44,
+        y2: 52,
+    },
+    Rectangle {
+        x1: 16,
+        y1: 52,
+        x2: 48,
+        y2: 64,
+    },
 ];
 
 pub(crate) const PREDEF_KEYS: [&str; 4] = ["END", "wing", "erase", "cape"];
