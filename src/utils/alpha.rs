@@ -6,6 +6,9 @@ macro_rules! define_strip_alpha_func {
         pub fn strip_alpha(image: &mut RgbaImage) {
             $(
             for y in $y1..$y2 {
+                if y >= image.height() {
+                    continue;
+                }
                 for x in $x1..$x2 {
                     image.get_pixel_mut(x, y).0[3] = u8::MAX
                 }
