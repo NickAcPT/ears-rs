@@ -18,13 +18,17 @@ macro_rules! set_area_transparent {
     };
 }
 
-fn copy_rect(image: &mut RgbaImage, d1: (u32, u32), d2: (u32, u32), s1: (u32, u32), s2: (u32, u32)) -> Option<()> {
+fn copy_rect(
+    image: &mut RgbaImage,
+    d1: (u32, u32),
+    d2: (u32, u32),
+    s1: (u32, u32),
+    s2: (u32, u32),
+) -> Option<()> {
     let (dx1, dy1) = d1;
     let (dx2, dy2) = d2;
     let (sx1, sy1) = s1;
     let (sx2, sy2) = s2;
-
-
 
     let dy_range = if dy1 < dy2 {
         Either::Left(dy1..dy2)
