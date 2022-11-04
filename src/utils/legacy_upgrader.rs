@@ -1,21 +1,44 @@
 use image::{imageops, RgbaImage};
 use itertools::Either;
 
-macro_rules! set_area_transparent {
-    ($image: expr, $x1: literal, $y1: literal, $x2: literal, $y2: literal) => {
-        let min_dy = $y1.min($y2);
-        let max_dy = $y1.max($y2);
-        let min_dx = $x1.min($x2);
-        let max_dx = $x1.max($x2);
+fn check_has_transparency(image: &RgbaImage, x1: u32, y1: u32, x2: u32, y2: u32) -> bool {
+    let min_dy = y1.min(y2);
+    let max_dy = y1.max(y2);
+    let min_dx = x1.min(x2);
+    let max_dx = x1.max(x2);
 
-        for y in min_dy..max_dy {
-            for x in min_dx..max_dx {
-                if let Some(pixel) = $image.get_pixel_mut_checked(x, y) {
-                    pixel.0[3] = 0;
+    for y in min_dy..max_dy {
+        for x in min_dx..max_dx {
+            if let Some(pixel) = image.get_pixel_checked(x, y) {
+                if pixel.0[3] < 128 {
+                    return true;
                 }
             }
         }
-    };
+    }
+
+    false
+}
+
+fn set_area_transparent(image: &mut RgbaImage, x1: u32, y1: u32, x2: u32, y2: u32) {
+    let has_transparency = check_has_transparency(image, x1, y1, x2, y2);
+    if has_transparency {
+        return;
+    }
+
+    let min_dy = y1.min(y2);
+    let max_dy = y1.max(y2);
+    let min_dx = x1.min(x2);
+    let max_dx = x1.max(x2);
+
+    for y in min_dy..max_dy {
+        for x in min_dx..max_dx {
+            if let Some(pixel) = image.get_pixel_mut_checked(x, y)
+            {
+                pixel.0[3] = 0;
+            }
+        }
+    }
 }
 
 fn copy_rect(
@@ -84,13 +107,36 @@ pub fn upgrade_skin_if_needed(image: RgbaImage) -> Option<RgbaImage> {
         copy_rect(&mut new_image, (44, 52), (40, 64), (40, 20), (44, 32))?;
         copy_rect(&mut new_image, (48, 52), (44, 64), (52, 20), (56, 32))?;
 
-        set_area_transparent!(new_image, 32, 0, 64, 32);
-        set_area_transparent!(new_image, 0, 32, 16, 48);
-        set_area_transparent!(new_image, 16, 32, 40, 48);
-        set_area_transparent!(new_image, 40, 32, 56, 48);
-        set_area_transparent!(new_image, 0, 48, 16, 64);
-        set_area_transparent!(new_image, 48, 48, 64, 64);
+        set_area_transparent(&mut new_image, 32, 0, 64, 32);
+        set_area_transparent(&mut new_image, 0, 32, 16, 48);
+        set_area_transparent(&mut new_image, 16, 32, 40, 48);
+        set_area_transparent(&mut new_image, 40, 32, 56, 48);
+        set_area_transparent(&mut new_image, 0, 48, 16, 64);
+        set_area_transparent(&mut new_image, 48, 48, 64, 64);
 
         Some(new_image)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn upgrader_works() {
+        macro_rules! upgrader_works {
+            ($original: literal, $expected: literal) => {
+                let image = image::open($original).unwrap();
+                let image = image.to_rgba8();
+
+                let new_image = upgrade_skin_if_needed(image).unwrap();
+                let expected_image = image::open($expected).unwrap().to_rgba8();
+
+                assert_eq!(new_image, expected_image);
+            };
+        }
+
+        upgrader_works!("test_images/notch_original.png", "test_images/notch_upgraded.png");
+        upgrader_works!("test_images/mister_fix_original.png", "test_images/mister_fix_upgraded.png");
     }
 }
