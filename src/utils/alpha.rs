@@ -43,11 +43,6 @@ mod tests {
 
                  for (x, y, pixel) in expected_image.enumerate_pixels() {
                     let real_pixel = image.get_pixel(x, y).0;
-                    if pixel.0 != real_pixel {
-                        println!("Expected: {:?}", pixel);
-                        println!("Real: {:?}", real_pixel);
-                        panic!("Pixel at ({}, {}) is not equal", x, y);
-                    }
                     assert_eq!(pixel.0, real_pixel);
                 }
             };
