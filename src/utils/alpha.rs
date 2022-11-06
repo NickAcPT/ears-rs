@@ -41,14 +41,20 @@ mod tests {
                 strip_alpha(&mut image);
                 let expected_image = image::open($expected).unwrap().to_rgba8();
 
-                 for (x, y, pixel) in expected_image.enumerate_pixels() {
+                for (x, y, pixel) in expected_image.enumerate_pixels() {
                     let real_pixel = image.get_pixel(x, y).0;
                     assert_eq!(pixel.0, real_pixel);
                 }
             };
         }
 
-        alpha_strip_works!("test_images/ears_v0_sample1.png", "test_images/ears_v0_sample1.png");
-        alpha_strip_works!("test_images/ears_v1_nickac_sample.png", "test_images/ears_v1_nickac_alpha_stripped.png");
+        alpha_strip_works!(
+            "test_images/ears_v0_sample1.png",
+            "test_images/ears_v0_sample1.png"
+        );
+        alpha_strip_works!(
+            "test_images/ears_v1_nickac_sample.png",
+            "test_images/ears_v1_nickac_alpha_stripped.png"
+        );
     }
 }

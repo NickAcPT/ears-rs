@@ -33,8 +33,7 @@ fn set_area_transparent(image: &mut RgbaImage, x1: u32, y1: u32, x2: u32, y2: u3
 
     for y in min_dy..max_dy {
         for x in min_dx..max_dx {
-            if let Some(pixel) = image.get_pixel_mut_checked(x, y)
-            {
+            if let Some(pixel) = image.get_pixel_mut_checked(x, y) {
                 pixel.0[3] = 0;
             }
         }
@@ -136,7 +135,13 @@ mod tests {
             };
         }
 
-        upgrader_works!("test_images/notch_original.png", "test_images/notch_upgraded.png");
-        upgrader_works!("test_images/mister_fix_original.png", "test_images/mister_fix_upgraded.png");
+        upgrader_works!(
+            "test_images/notch_original.png",
+            "test_images/notch_upgraded.png"
+        );
+        upgrader_works!(
+            "test_images/mister_fix_original.png",
+            "test_images/mister_fix_upgraded.png"
+        );
     }
 }

@@ -32,6 +32,6 @@ macro_rules! read_magic_pixel {
      };
  }
 
+use crate::utils::errors::EarsError;
 use image::RgbaImage;
 pub(crate) use read_magic_pixel;
-use crate::utils::errors::EarsError;

@@ -1,4 +1,5 @@
 use crate::parser::utils::to_argb_hex;
+use crate::utils::errors::{EarsError, Result};
 use crate::utils::model::{AlfafaData, Rectangle};
 use ibig::{ubig, UBig};
 use image::RgbaImage;
@@ -69,9 +70,9 @@ pub(crate) const ENCODE_REGIONS: [Rectangle; 10] = [
 
 pub(crate) const PREDEF_KEYS: [&str; 4] = ["END", "wing", "erase", "cape"];
 
-pub fn read_alfalfa(image: &RgbaImage) -> Option<AlfafaData> {
+pub fn read_alfalfa(image: &RgbaImage) -> Result<Option<AlfafaData>> {
     if image.width() != 64 || image.height() != 64 {
-        return None;
+        return Ok(None);
     }
 
     let mut bi = ubig!(0);
@@ -80,7 +81,10 @@ pub fn read_alfalfa(image: &RgbaImage) -> Option<AlfafaData> {
     for rect in ENCODE_REGIONS {
         for x in rect.x1..rect.x2 {
             for y in rect.y1..rect.y2 {
-                let a = to_argb_hex(image.get_pixel(x, y)) >> 24 & 0xFF;
+                let pixel = image
+                    .get_pixel_checked(x, y)
+                    .ok_or_else(|| EarsError::InvalidAlfalfaPixelPosition(x, y))?;
+                let a = to_argb_hex(pixel) >> 24 & 0xFF;
                 if a == 0 {
                     continue;
                 }
@@ -94,7 +98,7 @@ pub fn read_alfalfa(image: &RgbaImage) -> Option<AlfafaData> {
     }
 
     //TODO: Properly read the data off of the bytes (bi.to_be_bytes())
-    None
+    Ok(None)
 }
 
 #[cfg(test)]
