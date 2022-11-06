@@ -9,7 +9,7 @@ macro_rules! define_v0_magic_pixels {
 
         impl MagicPixelsV0 {
             #[allow(dead_code, overflowing_literals)]
-            pub(crate) fn get_hex(&self) -> i32 {
+            pub(crate) fn get_hex(&self) -> u32 {
                 match &self {
                     $(
                         MagicPixelsV0::$name => $hex,
@@ -18,7 +18,7 @@ macro_rules! define_v0_magic_pixels {
             }
 
             #[allow(dead_code, overflowing_literals)]
-            pub(crate) fn get_by_argb_hex(hex: i32) -> MagicPixelsV0 {
+            pub(crate) fn get_by_argb_hex(hex: u32) -> MagicPixelsV0 {
                 match hex {
                     $(
                         $hex => MagicPixelsV0::$name,
@@ -31,7 +31,7 @@ macro_rules! define_v0_magic_pixels {
 }
 
 define_v0_magic_pixels!(
-    Unknown: -1,
+    Unknown: 0xFF000000,
     Blue: 0xFF3F23D8,
     Green: 0xFF23D848,
     Red: 0xFFD82350,
