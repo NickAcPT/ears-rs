@@ -1,3 +1,5 @@
+use enum_ordinalize::Ordinalize;
+
 #[derive(Default, Debug, PartialEq)]
 pub struct TailData {
     pub mode: TailMode,
@@ -5,7 +7,7 @@ pub struct TailData {
     pub bends: [f32; 4],
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Ordinalize, Debug, PartialEq, Eq)]
 pub enum TailMode {
     None,
     Down,

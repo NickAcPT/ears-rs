@@ -1,2 +1,2 @@
-mod bit_input_stream;
+pub(crate) mod bit_reader;
 pub(crate) mod parser;

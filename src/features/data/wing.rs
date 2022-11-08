@@ -1,10 +1,12 @@
+use enum_ordinalize::Ordinalize;
+
 #[derive(Default, Debug, PartialEq, Eq)]
 pub struct WingData {
     pub mode: WingMode,
     pub animated: bool,
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Ordinalize, Debug, PartialEq, Eq)]
 pub enum WingMode {
     None,
     SymmetricDual,
