@@ -56,5 +56,9 @@ mod tests {
             "test_images/ears_v1_nickac_sample.png",
             "test_images/ears_v1_nickac_alpha_stripped.png"
         );
+        alpha_strip_works!(
+            "test_images/notch_upgraded.png",
+            "test_images/notch_upgraded_alpha_stripped.png"
+        );
     }
 }
