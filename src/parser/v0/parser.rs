@@ -11,7 +11,7 @@ use crate::{
 };
 use image::RgbaImage;
 
-struct EarsParserV0;
+pub(crate) struct EarsParserV0;
 
 impl EarsFeaturesParser for EarsParserV0 {
     fn get_data_version() -> u8 {

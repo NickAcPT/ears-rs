@@ -12,7 +12,7 @@ use crate::parser::v1::bit_reader::BitReader;
 
 const V1_PARSER_MAGIC: u32 = 0xFFEA2501;
 
-struct EarsParserV1;
+pub(crate) struct EarsParserV1;
 
 impl EarsFeaturesParser for EarsParserV1 {
     fn get_data_version() -> u8 {

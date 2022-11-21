@@ -1,4 +1,4 @@
 mod alfalfa;
 pub mod features;
-mod parser;
+pub mod parser;
 pub mod utils;

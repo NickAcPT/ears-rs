@@ -1,11 +1,12 @@
-pub(crate) mod utils;
-mod v0;
-mod v1;
+use image::RgbaImage;
 
 use crate::features::EarsFeatures;
 use crate::parser::utils::to_argb_hex;
 use crate::utils::errors::Result;
-use image::RgbaImage;
+
+pub(crate) mod utils;
+mod v0;
+mod v1;
 
 pub(crate) trait EarsFeaturesParser {
     fn get_data_version() -> u8;
@@ -24,4 +25,16 @@ pub(crate) trait EarsFeaturesParser {
     }
 
     fn parse(image: &RgbaImage) -> Result<Option<EarsFeatures>>;
+}
+
+pub struct EarsParser;
+
+impl EarsParser {
+    pub fn parse(image: &RgbaImage) -> Result<Option<EarsFeatures>> {
+        Ok(if let Some(features) = v0::parser::EarsParserV0::parse(image)? {
+            Some(features)
+        } else {
+            v1::parser::EarsParserV1::parse(image)?
+        })
+    }
 }
