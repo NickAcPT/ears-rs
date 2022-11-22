@@ -132,7 +132,7 @@ fn read_tail_data(image: &RgbaImage) -> Result<Option<TailData>> {
     ///
     /// This allows a black pixel to mean 0 for all of its values.
     ///
-    /// Taken from
+    /// Taken from https://github.com/unascribed/Ears/blob/7bf6c80a7d14ab8425926551fb1f46aba390b720/common/src/main/java/com/unascribed/ears/common/EarsFeaturesParserV0.java#L226
     fn px_val_to_unit(i: i32) -> f32 {
         if i == 0 {
             return 0.0;
