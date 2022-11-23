@@ -1,5 +1,5 @@
 use crate::utils::errors::{EarsError, Result};
-use std::io::{Read};
+use std::io::Read;
 
 pub(crate) struct BitReader<R: Read> {
     data: u8,

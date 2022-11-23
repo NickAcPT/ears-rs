@@ -1,14 +1,14 @@
-use crate::features::EarsFeatures;
-use crate::parser::utils::to_argb_hex;
-use crate::parser::EarsFeaturesParser;
-use crate::utils::errors::{EarsError, Result};
-use image::RgbaImage;
-use std::io::Cursor;
 use crate::features::data::ear::{EarAnchor, EarMode};
 use crate::features::data::snout::SnoutData;
 use crate::features::data::tail::{TailData, TailMode};
 use crate::features::data::wing::{WingData, WingMode};
+use crate::features::EarsFeatures;
+use crate::parser::utils::to_argb_hex;
+use crate::parser::EarsFeaturesParser;
 use crate::utils::bit_reader::BitReader;
+use crate::utils::errors::{EarsError, Result};
+use image::RgbaImage;
+use std::io::Cursor;
 
 const V1_PARSER_MAGIC: u32 = 0xFFEA2501;
 
@@ -67,8 +67,10 @@ impl EarsFeaturesParser for EarsParserV1 {
         let (ear_mode, ear_anchor) = if ears == 0 {
             (EarMode::None, None)
         } else {
-            (by_ordinal_or!(EarMode, ((ears-1)/3)+1, EarMode::None),
-             Some(by_ordinal_or!(EarAnchor, (ears-1)%3, EarAnchor::Center)))
+            (
+                by_ordinal_or!(EarMode, ((ears - 1) / 3) + 1, EarMode::None),
+                Some(by_ordinal_or!(EarAnchor, (ears - 1) % 3, EarAnchor::Center)),
+            )
         };
 
         let claws = reader.read_bool()?;
@@ -86,9 +88,21 @@ impl EarsFeaturesParser for EarsParserV1 {
         if tail_mode != TailMode::None {
             tail_segments = reader.read(2)? + 1;
             tail_bend_0 = reader.read_sam_unit(6)? * 90.0f32;
-            tail_bend_1 = if tail_segments > 1 { reader.read_sam_unit(6)? * 90.0f32 } else { 0.0f32 };
-            tail_bend_2 = if tail_segments > 2 { reader.read_sam_unit(6)? * 90.0f32 } else { 0.0f32 };
-            tail_bend_3 = if tail_segments > 3 { reader.read_sam_unit(6)? * 90.0f32 } else { 0.0f32 };
+            tail_bend_1 = if tail_segments > 1 {
+                reader.read_sam_unit(6)? * 90.0f32
+            } else {
+                0.0f32
+            };
+            tail_bend_2 = if tail_segments > 2 {
+                reader.read_sam_unit(6)? * 90.0f32
+            } else {
+                0.0f32
+            };
+            tail_bend_3 = if tail_segments > 3 {
+                reader.read_sam_unit(6)? * 90.0f32
+            } else {
+                0.0f32
+            };
         }
 
         let mut snout_offset = 0u32;
@@ -160,13 +174,25 @@ mod tests {
 
     #[test]
     fn v1_detection_works() {
-        assert!(EarsParserV1::detect(&image::open("test_images/ears_v1_nickac_sample.png").unwrap().to_rgba8()));
-        assert!(!EarsParserV1::detect(&image::open("test_images/ears_v0_sample1.png").unwrap().to_rgba8()));
+        assert!(EarsParserV1::detect(
+            &image::open("test_images/ears_v1_nickac_sample.png")
+                .unwrap()
+                .to_rgba8()
+        ));
+        assert!(!EarsParserV1::detect(
+            &image::open("test_images/ears_v0_sample1.png")
+                .unwrap()
+                .to_rgba8()
+        ));
     }
 
     #[test]
     fn v1_parse_works() {
-        let result = EarsParserV1::parse(&image::open("test_images/ears_v1_nickac_sample.png").unwrap().to_rgba8());
+        let result = EarsParserV1::parse(
+            &image::open("test_images/ears_v1_nickac_sample.png")
+                .unwrap()
+                .to_rgba8(),
+        );
         assert!(result.is_ok());
         let features = result.unwrap();
         assert!(features.is_some());
@@ -178,18 +204,24 @@ mod tests {
         assert!(features.claws);
         assert!(!features.horn);
 
-        assert_eq!(features.tail, Some(TailData {
-            mode: TailMode::Down,
-            segments: 2,
-            bends: [-10.0, -14.285715, 0.0, 0.0]
-        }));
+        assert_eq!(
+            features.tail,
+            Some(TailData {
+                mode: TailMode::Down,
+                segments: 2,
+                bends: [-10.0, -14.285715, 0.0, 0.0]
+            })
+        );
 
-        assert_eq!(features.snout, Some(SnoutData {
-            offset: 1,
-            width: 4,
-            height: 2,
-            depth: 2,
-        }));
+        assert_eq!(
+            features.snout,
+            Some(SnoutData {
+                offset: 1,
+                width: 4,
+                height: 2,
+                depth: 2,
+            })
+        );
 
         assert_eq!(features.chest_size, 0.0);
         assert_eq!(features.wing, None);

@@ -73,33 +73,35 @@ mod tests {
         let data = data.unwrap();
         let regions = data.get_erase_regions()?;
 
-        assert_eq!(regions, Some(vec![
-            EraseRegion {
-                x: 49,
-                y: 8,
-                width: 7,
-                height: 8,
-            },
-            EraseRegion {
-                x: 32,
-                y: 8,
-                width: 7,
-                height: 8,
-            },
-            EraseRegion {
-                x: 42,
-                y: 13,
-                width: 4,
-                height: 2,
-            },
-            EraseRegion {
-                x: 32,
-                y: 38,
-                width: 7,
-                height: 10,
-            },
-        ]));
-
+        assert_eq!(
+            regions,
+            Some(vec![
+                EraseRegion {
+                    x: 49,
+                    y: 8,
+                    width: 7,
+                    height: 8,
+                },
+                EraseRegion {
+                    x: 32,
+                    y: 8,
+                    width: 7,
+                    height: 8,
+                },
+                EraseRegion {
+                    x: 42,
+                    y: 13,
+                    width: 4,
+                    height: 2,
+                },
+                EraseRegion {
+                    x: 32,
+                    y: 38,
+                    width: 7,
+                    height: 10,
+                },
+            ])
+        );
 
         Ok(())
     }
