@@ -3,7 +3,7 @@ use image::RgbaImage;
 use crate::alfalfa::utils::erase_utils::EraseRegionsProvider;
 use crate::utils::errors::Result;
 
-fn process_erase_regions(image: &mut RgbaImage) -> Result<()> {
+pub fn process_erase_regions(image: &mut RgbaImage) -> Result<()> {
     let alfalfa = crate::alfalfa::io::read_alfalfa(image)?;
 
     if let Some(alfalfa) = alfalfa {
