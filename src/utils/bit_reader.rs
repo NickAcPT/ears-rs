@@ -4,22 +4,31 @@ use std::io::{Read};
 pub(crate) struct BitReader<R: Read> {
     data: u8,
     index: i32,
+    length: usize,
+    current_index: usize,
     reader: R,
 }
 
 impl<R: Read> BitReader<R> {
-    pub(crate) fn new(reader: R) -> BitReader<R> {
+    pub(crate) fn new(reader: R, len: usize) -> BitReader<R> {
         BitReader {
             data: 0,
             index: -1,
+            length: len,
+            current_index: 0,
             reader,
         }
+    }
+
+    pub(crate) fn available(&self) -> usize {
+        self.length - self.current_index
     }
 
     pub(crate) fn read_bit(&mut self) -> Result<u8> {
         Ok(if self.index < 0 {
             let mut buf = [0u8; 1];
             self.reader.read_exact(&mut buf)?;
+            self.current_index += 1;
 
             self.data = buf[0];
             self.index = 6;

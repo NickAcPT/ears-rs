@@ -15,6 +15,7 @@ pub(crate) trait EarsFeaturesParser {
 
     fn detect(image: &RgbaImage) -> bool {
         let magic_pixel = image.get_pixel_checked(0, 32);
+        println!("magic_pixel: {:?}", magic_pixel);
         if let Some(magic_pixel) = magic_pixel {
             let magic_pixel = to_argb_hex(magic_pixel);
 
@@ -31,10 +32,15 @@ pub struct EarsParser;
 
 impl EarsParser {
     pub fn parse(image: &RgbaImage) -> Result<Option<EarsFeatures>> {
-        Ok(if let Some(features) = v0::parser::EarsParserV0::parse(image)? {
-            Some(features)
+        if v0::parser::EarsParserV0::detect(image) {
+            println!("Detected version 0");
+            v0::parser::EarsParserV0::parse(image)
+        } else if v1::parser::EarsParserV1::detect(image) {
+            println!("Detected version 1");
+            v1::parser::EarsParserV1::parse(image)
         } else {
-            v1::parser::EarsParserV1::parse(image)?
-        })
+            println!("Detected no version");
+            Ok(None)
+        }
     }
 }

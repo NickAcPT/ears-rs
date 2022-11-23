@@ -10,7 +10,7 @@ pub(crate) struct Rectangle {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
-pub struct AlfafaData {
+pub struct AlfalfaData {
     pub version: u8,
     pub data: HashMap<String, Vec<u8>>,
 }

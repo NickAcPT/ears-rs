@@ -8,7 +8,7 @@ use crate::features::data::ear::{EarAnchor, EarMode};
 use crate::features::data::snout::SnoutData;
 use crate::features::data::tail::{TailData, TailMode};
 use crate::features::data::wing::{WingData, WingMode};
-use crate::parser::v1::bit_reader::BitReader;
+use crate::utils::bit_reader::BitReader;
 
 const V1_PARSER_MAGIC: u32 = 0xFFEA2501;
 
@@ -49,7 +49,8 @@ impl EarsFeaturesParser for EarsParserV1 {
             }
         }
 
-        let mut reader = BitReader::new(Cursor::new(data));
+        let data_len = data.len();
+        let mut reader = BitReader::new(Cursor::new(data), data_len);
 
         // currently, version means nothing. in the future it will indicate additional
         // data that has been added to the end of the format (earlier data mustn't change
