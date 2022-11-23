@@ -118,8 +118,9 @@ pub fn read_alfalfa(image: &RgbaImage) -> Result<Option<AlfalfaData>> {
             let len = data.read_u8()?;
             // Read len bytes into the end of the buffer
             let old_len = buf.len();
-            buf.resize(old_len + len as usize, 0);
-            data.read_exact(&mut buf[old_len..])?;
+            let new_len = old_len + len as usize;
+            buf.resize(new_len, 0);
+            data.read_exact(&mut buf[old_len..new_len])?;
 
             if len != 255 {
                 break;
@@ -159,7 +160,8 @@ fn decode_alfalfa(image: &RgbaImage) -> Result<Option<Vec<u8>>> {
         }
     }
 
-    Ok(Some(bi.to_be_bytes()))
+    let vec = bi.to_be_bytes();
+    Ok(if vec.is_empty() { None } else { Some(vec) })
 }
 
 #[cfg(test)]
