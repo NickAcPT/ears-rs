@@ -10,7 +10,7 @@ use crate::parser::utils::to_argb_hex;
 use crate::utils::errors::{EarsError, Result};
 use crate::utils::model::{AlfalfaData, Rectangle};
 
-pub(crate) const ENCODE_REGIONS: [Rectangle; 10] = [
+const ENCODE_REGIONS: [Rectangle; 10] = [
     Rectangle {
         x1: 8,
         y1: 0,
@@ -73,8 +73,7 @@ pub(crate) const ENCODE_REGIONS: [Rectangle; 10] = [
     },
 ];
 
-const MAGIC: u32 = 0xEA1FA1FA;
-// EALFALFA
+const MAGIC: u32 = 0xEA1FA1FA; // EALFALFA
 const PREDEF_KEYS: [&str; 4] = ["END", "wing", "erase", "cape"];
 
 pub fn read_alfalfa(image: &RgbaImage) -> Result<Option<AlfalfaData>> {
@@ -239,7 +238,7 @@ mod tests {
                             209, 227, 149, 197, 218, 189, 0, 0, 0, 0, 73, 69, 78, 68, 174, 66, 96,
                             130
                         ]
-                        .to_vec()
+                            .to_vec()
                     )
                 ]),
             })

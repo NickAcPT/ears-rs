@@ -5,7 +5,7 @@ use crate::utils::errors::Result;
 use crate::utils::model::AlfalfaData;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
-struct EraseRegion {
+pub struct EraseRegion {
     pub x: u8,
     pub y: u8,
     pub width: u8,
@@ -29,7 +29,7 @@ impl EraseRegion {
     }
 }
 
-trait EraseRegionsProvider {
+pub trait EraseRegionsProvider {
     fn get_erase_regions(&self) -> Result<Option<Vec<EraseRegion>>>;
 }
 
