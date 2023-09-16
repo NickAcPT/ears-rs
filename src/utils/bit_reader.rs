@@ -27,7 +27,7 @@ impl<R: Read> BitReader<R> {
     pub(crate) fn read_bit(&mut self) -> Result<u8> {
         Ok(if self.index < 0 {
             let mut buf = [0u8; 1];
-            self.reader.read_exact(&mut buf)?;
+            self.reader.read_exact(&mut buf).map_err(|e| (e, "Unable to read bit data"))?;
             self.current_index += 1;
 
             self.data = buf[0];

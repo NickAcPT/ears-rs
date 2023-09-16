@@ -1,6 +1,7 @@
 use image::{imageops, RgbaImage};
 use itertools::Either;
 
+#[inline]
 fn check_has_transparency(image: &RgbaImage, x1: u32, y1: u32, x2: u32, y2: u32) -> bool {
     let min_dy = y1.min(y2);
     let max_dy = y1.max(y2);
@@ -20,6 +21,7 @@ fn check_has_transparency(image: &RgbaImage, x1: u32, y1: u32, x2: u32, y2: u32)
     false
 }
 
+#[inline]
 fn set_area_transparent(image: &mut RgbaImage, x1: u32, y1: u32, x2: u32, y2: u32) {
     let has_transparency = check_has_transparency(image, x1, y1, x2, y2);
     if has_transparency {
@@ -40,13 +42,14 @@ fn set_area_transparent(image: &mut RgbaImage, x1: u32, y1: u32, x2: u32, y2: u3
     }
 }
 
+#[inline]
 fn copy_rect(
     image: &mut RgbaImage,
     d1: (u32, u32),
     d2: (u32, u32),
     s1: (u32, u32),
     s2: (u32, u32),
-) -> Option<()> {
+) {
     let (dx1, dy1) = d1;
     let (dx2, dy2) = d2;
     let (sx1, sy1) = s1;
@@ -78,33 +81,32 @@ fn copy_rect(
 
     for (dy, sy) in dy_range.zip(sy_range) {
         for (dx, sx) in dx_range.clone().zip(sx_range.clone()) {
-            let pixel = image.get_pixel_checked(sx, sy)?;
-            image.put_pixel(dx, dy, *pixel);
+            if let Some(pixel) = image.get_pixel_checked(sx, sy) {
+                image.put_pixel(dx, dy, *pixel);
+            }
         }
     }
-
-    Some(())
 }
 
-pub fn upgrade_skin_if_needed(image: RgbaImage) -> Option<RgbaImage> {
+pub fn upgrade_skin_if_needed(image: RgbaImage) -> RgbaImage {
     if image.height() == 64 {
-        Some(image)
+        image
     } else {
         let mut new_image = RgbaImage::new(64, 64);
         imageops::replace(&mut new_image, &image, 0, 0);
 
-        copy_rect(&mut new_image, (24, 48), (20, 52), (4, 16), (8, 20))?;
-        copy_rect(&mut new_image, (28, 48), (24, 52), (8, 16), (12, 20))?;
-        copy_rect(&mut new_image, (20, 52), (16, 64), (8, 20), (12, 32))?;
-        copy_rect(&mut new_image, (24, 52), (20, 64), (4, 20), (8, 32))?;
-        copy_rect(&mut new_image, (28, 52), (24, 64), (0, 20), (4, 32))?;
-        copy_rect(&mut new_image, (32, 52), (28, 64), (12, 20), (16, 32))?;
-        copy_rect(&mut new_image, (40, 48), (36, 52), (44, 16), (48, 20))?;
-        copy_rect(&mut new_image, (44, 48), (40, 52), (48, 16), (52, 20))?;
-        copy_rect(&mut new_image, (36, 52), (32, 64), (48, 20), (52, 32))?;
-        copy_rect(&mut new_image, (40, 52), (36, 64), (44, 20), (48, 32))?;
-        copy_rect(&mut new_image, (44, 52), (40, 64), (40, 20), (44, 32))?;
-        copy_rect(&mut new_image, (48, 52), (44, 64), (52, 20), (56, 32))?;
+        copy_rect(&mut new_image, (24, 48), (20, 52), (4, 16), (8, 20));
+        copy_rect(&mut new_image, (28, 48), (24, 52), (8, 16), (12, 20));
+        copy_rect(&mut new_image, (20, 52), (16, 64), (8, 20), (12, 32));
+        copy_rect(&mut new_image, (24, 52), (20, 64), (4, 20), (8, 32));
+        copy_rect(&mut new_image, (28, 52), (24, 64), (0, 20), (4, 32));
+        copy_rect(&mut new_image, (32, 52), (28, 64), (12, 20), (16, 32));
+        copy_rect(&mut new_image, (40, 48), (36, 52), (44, 16), (48, 20));
+        copy_rect(&mut new_image, (44, 48), (40, 52), (48, 16), (52, 20));
+        copy_rect(&mut new_image, (36, 52), (32, 64), (48, 20), (52, 32));
+        copy_rect(&mut new_image, (40, 52), (36, 64), (44, 20), (48, 32));
+        copy_rect(&mut new_image, (44, 52), (40, 64), (40, 20), (44, 32));
+        copy_rect(&mut new_image, (48, 52), (44, 64), (52, 20), (56, 32));
 
         set_area_transparent(&mut new_image, 32, 0, 64, 32);
         set_area_transparent(&mut new_image, 0, 32, 16, 48);
@@ -113,7 +115,7 @@ pub fn upgrade_skin_if_needed(image: RgbaImage) -> Option<RgbaImage> {
         set_area_transparent(&mut new_image, 0, 48, 16, 64);
         set_area_transparent(&mut new_image, 48, 48, 64, 64);
 
-        Some(new_image)
+        new_image
     }
 }
 
@@ -123,25 +125,24 @@ mod tests {
 
     #[test]
     fn upgrader_works() {
-        macro_rules! upgrader_works {
-            ($original: literal, $expected: literal) => {
-                let image = image::open($original).unwrap();
-                let image = image.to_rgba8();
+        fn upgrader_works(original: &str, expected: &str) {
+            let image = image::open(original).unwrap();
+            let image = image.to_rgba8();
 
-                let new_image = upgrade_skin_if_needed(image).unwrap();
-                let expected_image = image::open($expected).unwrap().to_rgba8();
+            let new_image = upgrade_skin_if_needed(image);
+            let expected_image = image::open(expected).unwrap().to_rgba8();
 
-                assert_eq!(new_image, expected_image);
-            };
+            assert_eq!(new_image, expected_image);
         }
 
-        upgrader_works!(
+        upgrader_works(
             "test_images/notch_original.png",
-            "test_images/notch_upgraded.png"
+            "test_images/notch_upgraded.png",
         );
-        upgrader_works!(
+
+        upgrader_works(
             "test_images/mister_fix_original.png",
-            "test_images/mister_fix_upgraded.png"
+            "test_images/mister_fix_upgraded.png",
         );
     }
 }

@@ -85,13 +85,13 @@ pub fn read_alfalfa(image: &RgbaImage) -> Result<Option<AlfalfaData>> {
 
     let mut data = Cursor::new(data.unwrap());
 
-    let magic = data.read_u32::<BigEndian>()?;
+    let magic = data.read_u32::<BigEndian>().map_err(|e| (e, "Unable to read Magic data"))?;
 
     if magic != MAGIC {
         return Ok(None);
     }
 
-    let version = data.read_u8()?;
+    let version = data.read_u8().map_err(|e| (e, "Unable to read version"))?;
 
     if version != 1 {
         // Don't know how to read this version, ignoring
@@ -101,7 +101,7 @@ pub fn read_alfalfa(image: &RgbaImage) -> Result<Option<AlfalfaData>> {
     let mut map = HashMap::with_capacity(PREDEF_KEYS.len());
 
     loop {
-        let index = data.read_u8()?;
+        let index = data.read_u8().map_err(|e| (e, "Unable to read alfalfa key index"))?;
         let key = if (index as usize) >= PREDEF_KEYS.len() {
             format!("!unk{}", index)
         } else {
@@ -115,12 +115,12 @@ pub fn read_alfalfa(image: &RgbaImage) -> Result<Option<AlfalfaData>> {
         let mut buf = Vec::with_capacity(256);
 
         loop {
-            let len = data.read_u8()?;
+            let len = data.read_u8().map_err(|e| (e, "Unable to read data length"))?;
             // Read len bytes into the end of the buffer
             let old_len = buf.len();
             let new_len = old_len + len as usize;
             buf.resize(new_len, 0);
-            data.read_exact(&mut buf[old_len..new_len])?;
+            data.read_exact(&mut buf[old_len..new_len]).map_err(|e| (e, "Unable to read alfalfa data into buffer"))?;
 
             if len != 255 {
                 break;

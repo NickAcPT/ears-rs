@@ -31,32 +31,31 @@ define_strip_alpha_func!(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::utils::alpha::strip_alpha;
+
 
     #[test]
     fn alpha_stripper_works() {
-        macro_rules! alpha_strip_works {
-            ($original: literal, $expected: literal) => {
-                let mut image = image::open($original).unwrap().to_rgba8();
-                strip_alpha(&mut image);
-                let expected_image = image::open($expected).unwrap().to_rgba8();
+        fn alpha_strip_works(original: &str, expected: &str) {
+            let mut image = image::open(original).unwrap().to_rgba8();
+            strip_alpha(&mut image);
+            let expected_image = image::open(expected).unwrap().to_rgba8();
 
-                for (x, y, pixel) in expected_image.enumerate_pixels() {
-                    let real_pixel = image.get_pixel(x, y).0;
-                    assert_eq!(pixel.0, real_pixel);
-                }
-            };
+            for (x, y, pixel) in expected_image.enumerate_pixels() {
+                let real_pixel = image.get_pixel(x, y).0;
+                assert_eq!(pixel.0, real_pixel);
+            }
         }
 
-        alpha_strip_works!(
+        alpha_strip_works(
             "test_images/ears_v0_sample1.png",
             "test_images/ears_v0_sample1.png"
         );
-        alpha_strip_works!(
+        alpha_strip_works(
             "test_images/ears_v1_nickac_sample.png",
             "test_images/ears_v1_nickac_alpha_stripped.png"
         );
-        alpha_strip_works!(
+        alpha_strip_works(
             "test_images/notch_upgraded.png",
             "test_images/notch_upgraded_alpha_stripped.png"
         );

@@ -31,22 +31,22 @@ mod tests {
 
     #[test]
     fn eraser_works() -> Result<()> {
-        macro_rules! eraser_works {
-            ($original: literal, $expected: literal) => {
-                let image = image::open($original).unwrap();
-                let mut image = image.to_rgba8();
+        fn eraser_works(original: &str, expected: &str) -> Result<()> {
+            let image = image::open(original).unwrap();
+            let mut image = image.to_rgba8();
 
-                process_erase_regions(&mut image)?;
-                let expected_image = image::open($expected).unwrap().to_rgba8();
+            process_erase_regions(&mut image)?;
+            let expected_image = image::open(expected).unwrap().to_rgba8();
 
-                assert_eq!(image, expected_image);
-            };
+            assert_eq!(image, expected_image);
+            
+            Ok(())
         }
 
-        eraser_works!(
+        eraser_works(
             "test_images/ears_v1_nickac_sample.png",
             "test_images/ears_v1_nickac_sample_erased.png"
-        );
+        )?;
 
         Ok(())
     }

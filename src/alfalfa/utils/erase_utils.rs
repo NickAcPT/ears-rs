@@ -38,7 +38,7 @@ const ERASE_KEY: &str = "erase";
 impl EraseRegionsProvider for AlfalfaData {
     fn get_erase_regions(&self) -> Result<Option<Vec<EraseRegion>>> {
         if self.data.contains_key(ERASE_KEY) {
-            let data = &self.data[ERASE_KEY];
+            let data = self.data[ERASE_KEY].as_slice();
             let mut reader = BitReader::new(Cursor::new(data), data.len());
 
             let mut regions = Vec::new();
