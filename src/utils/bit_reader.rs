@@ -9,6 +9,7 @@ pub(crate) struct BitReader<R: Read> {
     reader: R,
 }
 
+#[allow(dead_code)]
 impl<R: Read> BitReader<R> {
     pub(crate) fn new(reader: R, len: usize) -> BitReader<R> {
         BitReader {
