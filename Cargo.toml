@@ -1,7 +1,7 @@
 [package]
 name = "ears-rs"
 description = "A Rust based library to read Ears mod data from Minecraft skins"
-version = "0.1.1"
+version = "0.2.0"
 edition = "2021"
 authors = ["NickAcPT"]
 

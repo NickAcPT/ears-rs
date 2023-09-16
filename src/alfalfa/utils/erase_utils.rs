@@ -2,7 +2,7 @@ use std::io::{Cursor, Read};
 
 use crate::utils::bit_reader::BitReader;
 use crate::utils::errors::Result;
-use crate::utils::model::AlfalfaData;
+use crate::utils::model::{AlfalfaData, AlfalfaDataKey};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct EraseRegion {
@@ -33,12 +33,9 @@ pub trait EraseRegionsProvider {
     fn get_erase_regions(&self) -> Result<Option<Vec<EraseRegion>>>;
 }
 
-const ERASE_KEY: &str = "erase";
-
 impl EraseRegionsProvider for AlfalfaData {
     fn get_erase_regions(&self) -> Result<Option<Vec<EraseRegion>>> {
-        if self.data.contains_key(ERASE_KEY) {
-            let data = self.data[ERASE_KEY].as_slice();
+        if let Some(data) = self.get_data(AlfalfaDataKey::Erase) {
             let mut reader = BitReader::new(Cursor::new(data), data.len());
 
             let mut regions = Vec::new();
