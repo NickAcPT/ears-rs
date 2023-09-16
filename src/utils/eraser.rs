@@ -39,13 +39,13 @@ mod tests {
             let expected_image = image::open(expected).unwrap().to_rgba8();
 
             assert_eq!(image, expected_image);
-            
+
             Ok(())
         }
 
         eraser_works(
             "test_images/ears_v1_nickac_sample.png",
-            "test_images/ears_v1_nickac_sample_erased.png"
+            "test_images/ears_v1_nickac_sample_erased.png",
         )?;
 
         Ok(())

@@ -33,7 +33,6 @@ define_strip_alpha_func!(
 mod tests {
     use crate::utils::alpha::strip_alpha;
 
-
     #[test]
     fn alpha_stripper_works() {
         fn alpha_strip_works(original: &str, expected: &str) {
@@ -49,15 +48,15 @@ mod tests {
 
         alpha_strip_works(
             "test_images/ears_v0_sample1.png",
-            "test_images/ears_v0_sample1.png"
+            "test_images/ears_v0_sample1.png",
         );
         alpha_strip_works(
             "test_images/ears_v1_nickac_sample.png",
-            "test_images/ears_v1_nickac_alpha_stripped.png"
+            "test_images/ears_v1_nickac_alpha_stripped.png",
         );
         alpha_strip_works(
             "test_images/notch_upgraded.png",
-            "test_images/notch_upgraded_alpha_stripped.png"
+            "test_images/notch_upgraded_alpha_stripped.png",
         );
     }
 }
