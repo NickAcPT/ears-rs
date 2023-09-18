@@ -5,8 +5,9 @@ mod alpha;
 mod eraser;
 pub mod errors;
 mod legacy_upgrader;
-pub mod cape;
+mod cape;
 
 pub use alpha::strip_alpha;
 pub use eraser::process_erase_regions;
 pub use legacy_upgrader::upgrade_skin_if_needed;
+pub use cape::convert_ears_cape_to_mojang_cape;

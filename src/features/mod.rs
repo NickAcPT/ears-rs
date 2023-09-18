@@ -2,7 +2,7 @@ pub mod data;
 use crate::features::data::ear::{EarAnchor, EarMode};
 use data::{snout::SnoutData, tail::TailData, wing::WingData};
 
-#[derive(Default)]
+#[derive(Default, Debug, Clone, Copy)]
 pub struct EarsFeatures {
     pub ear_mode: EarMode,
     pub ear_anchor: Option<EarAnchor>,
