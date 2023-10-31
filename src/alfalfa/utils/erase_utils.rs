@@ -1,6 +1,6 @@
-use std::io::{Cursor, Read};
+use std::io::{Cursor, Read, Write};
 
-use crate::utils::bit_reader::BitReader;
+use crate::utils::bit_reader::{BitReader, BitWriter};
 use crate::utils::errors::Result;
 use crate::utils::model::{AlfalfaData, AlfalfaDataKey};
 
@@ -26,6 +26,24 @@ impl EraseRegion {
             width,
             height,
         })
+    }
+
+    fn encode<W: Write>(&self, writer: &mut BitWriter<W>) -> Result<()> {
+        writer.write_long(6, self.x as u64)?;
+        writer.write_long(6, self.y as u64)?;
+
+        writer.write_long(5, (self.width - 1) as u64)?;
+        writer.write_long(5, (self.height - 1) as u64)?;
+
+        Ok(())
+    }
+
+    fn encode_regions<W: Write>(regions: &[EraseRegion], writer: &mut BitWriter<W>) -> Result<()> {
+        for region in regions {
+            region.encode(writer)?;
+        }
+
+        Ok(())
     }
 }
 
@@ -99,6 +117,50 @@ mod tests {
                 },
             ])
         );
+
+        Ok(())
+    }
+
+    #[test]
+    fn erase_region_write_works() -> Result<()> {
+        let data: Vec<u8> = vec![
+            0xc4, 0x83, 0x1e, 0x02, 0x0c, 0x7a, 0x8d, 0x18, 0x60, 0x98, 0xc9,
+        ];
+
+        let regions = vec![
+            EraseRegion {
+                x: 49,
+                y: 8,
+                width: 7,
+                height: 8,
+            },
+            EraseRegion {
+                x: 32,
+                y: 8,
+                width: 7,
+                height: 8,
+            },
+            EraseRegion {
+                x: 42,
+                y: 13,
+                width: 4,
+                height: 2,
+            },
+            EraseRegion {
+                x: 32,
+                y: 38,
+                width: 7,
+                height: 10,
+            },
+        ];
+
+        let mut out = Vec::new();
+        {
+            let mut writer = BitWriter::new(Cursor::new(&mut out));
+            EraseRegion::encode_regions(&regions, &mut writer)?;
+        }
+        
+        assert_eq!(out, data);
 
         Ok(())
     }
