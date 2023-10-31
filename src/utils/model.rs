@@ -35,11 +35,26 @@ impl From<AlfalfaDataKey> for &'static str {
 }
 
 impl AlfalfaData {
+    pub fn new() -> Self {
+        Self {
+            version: 1,
+            data: HashMap::new(),
+        }
+    }
+
     pub(crate) fn get_data_internal(&self, key: &'static str) -> Option<&[u8]> {
         self.data.get(key).map(|v| v.as_slice())
     }
-    
+
     pub fn get_data(&self, key: AlfalfaDataKey) -> Option<&[u8]> {
         self.get_data_internal(key.into())
+    }
+    
+    pub(crate) fn set_data_internal(&mut self, key: &'static str, value: Vec<u8>) {
+        self.data.insert(key.to_owned(), value);
+    }
+    
+    pub fn set_data(&mut self, key: AlfalfaDataKey, value: Vec<u8>) {
+        self.set_data_internal(key.into(), value);
     }
 }
