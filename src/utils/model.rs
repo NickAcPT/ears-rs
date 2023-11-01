@@ -57,4 +57,8 @@ impl AlfalfaData {
     pub fn set_data(&mut self, key: AlfalfaDataKey, value: Vec<u8>) {
         self.set_data_internal(key.into(), value);
     }
+    
+    pub fn is_empty(&self) -> bool {
+        self.data.is_empty()
+    }
 }

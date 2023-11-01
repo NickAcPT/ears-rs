@@ -6,6 +6,7 @@ use std::ops::{BitAnd, BitOr, Shl, Shr};
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use ibig::{ubig, UBig};
 use image::RgbaImage;
+use itertools::Itertools;
 
 use crate::parser::utils::to_argb_hex;
 use crate::utils::errors::{EarsError, Result};
@@ -304,7 +305,7 @@ pub fn encode_alfalfa(data: &AlfalfaData, out: &mut Vec<u8>) -> Result<()> {
     out.write_u8(data.version)
         .map_err(|e| (e, "Unable to write version data"))?;
 
-    for (key, value) in &data.data {
+    for (key, value) in data.data.iter().sorted_by_key(|(k, _)| *k) {
         let idx = PREDEF_KEYS.iter().position(|k| *k == *key);
 
         if let Some(idx) = idx {
