@@ -4,7 +4,7 @@ use crate::utils::bit_reader::{BitReader, BitWriter};
 use crate::utils::errors::Result;
 use crate::utils::model::{AlfalfaData, AlfalfaDataKey};
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct EraseRegion {
     pub x: u8,
     pub y: u8,
