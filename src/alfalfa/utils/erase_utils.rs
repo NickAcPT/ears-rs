@@ -75,7 +75,7 @@ impl EraseRegionsProvider for AlfalfaData {
         let mut data = Vec::new();
         {
             let mut writer = BitWriter::new(Cursor::new(&mut data));
-            EraseRegion::encode_regions(&regions, &mut writer)?;
+            EraseRegion::encode_regions(regions, &mut writer)?;
         }
 
         self.set_data(AlfalfaDataKey::Erase, data);

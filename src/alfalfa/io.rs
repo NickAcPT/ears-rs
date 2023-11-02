@@ -160,7 +160,7 @@ fn decode_alfalfa(image: &RgbaImage) -> Result<Option<Vec<u8>>> {
                     continue;
                 }
 
-                let value = (0x7F - (a & 0x7F)) as u32;
+                let value = 0x7F - (a & 0x7F);
 
                 bi = bi.bitor(UBig::from(value).shl(read as usize * 7usize));
                 read += 1;

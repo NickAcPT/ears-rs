@@ -8,16 +8,14 @@ pub struct TailData {
 }
 
 #[derive(Ordinalize, Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Default)]
 pub enum TailMode {
     None,
+    #[default]
     Down,
     Back,
     Up,
     Vertical,
 }
 
-impl Default for TailMode {
-    fn default() -> Self {
-        TailMode::Down
-    }
-}
+

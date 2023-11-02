@@ -74,7 +74,7 @@ impl<W: Write> BitWriter<W> {
     }
 
     pub(crate) fn write_long(&mut self, bits: u8, value: u64) -> Result<()> {
-        if bits < 1 || bits >= 64 {
+        if !(1..64).contains(&bits) {
             Err(EarsError::NotEnoughSpaceInLongForBitsError(bits))
         } else {
             let mut cur = u64::reverse_bits(value) >> (64 - bits);
@@ -139,8 +139,8 @@ mod tests {
         let len = output.len();
         let mut reader = BitReader::new(Cursor::new(&mut output), len);
 
-        assert_eq!(reader.read_bool()?, true);
-        assert_eq!(reader.read_bool()?, false);
+        assert!(reader.read_bool()?);
+        assert!(!(reader.read_bool()?));
 
         assert_eq!(reader.read_long(6)?, 63);
         assert_eq!(reader.read_long(6)?, 0);

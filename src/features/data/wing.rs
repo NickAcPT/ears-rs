@@ -7,16 +7,14 @@ pub struct WingData {
 }
 
 #[derive(Ordinalize, Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Default)]
 pub enum WingMode {
     None,
+    #[default]
     SymmetricDual,
     SymmetricSingle,
     AsymmetricL,
     AsymmetricR,
 }
 
-impl Default for WingMode {
-    fn default() -> Self {
-        WingMode::SymmetricDual
-    }
-}
+

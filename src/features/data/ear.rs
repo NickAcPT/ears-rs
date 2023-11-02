@@ -1,7 +1,9 @@
 use enum_ordinalize::Ordinalize;
 
 #[derive(Ordinalize, Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Default)]
 pub enum EarMode {
+    #[default]
     None,
     Above,
     Sides,
@@ -15,20 +17,14 @@ pub enum EarMode {
 }
 
 #[derive(Ordinalize, Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Default)]
 pub enum EarAnchor {
+    #[default]
     Center,
     Front,
     Back,
 }
 
-impl Default for EarMode {
-    fn default() -> Self {
-        EarMode::None
-    }
-}
 
-impl Default for EarAnchor {
-    fn default() -> Self {
-        EarAnchor::Center
-    }
-}
+
+
