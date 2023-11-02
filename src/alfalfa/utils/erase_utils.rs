@@ -1,6 +1,6 @@
 use std::io::{Cursor, Read, Write};
 
-use crate::utils::bit_reader::{BitReader, BitWriter};
+use crate::utils::{bit_reader::BitReader, bit_writer::BitWriter};
 use crate::utils::errors::Result;
 use crate::utils::model::{AlfalfaData, AlfalfaDataKey};
 
