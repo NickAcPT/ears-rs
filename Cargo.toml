@@ -6,9 +6,12 @@ edition = "2021"
 authors = ["NickAcPT"]
 
 [dependencies]
-image = { version = "0.24", default-features = false, features = ["png"] }
-ibig = "0.3"
-itertools = "0.11"
-thiserror = "1"
-enum-ordinalize = "3.1"
-byteorder = "1"
+image = { version = "^0.24", default-features = false }
+ibig = "^0.3"
+itertools = "^0.11"
+thiserror = "^1"
+enum-ordinalize = "^3.1"
+byteorder = "^1"
+
+[dev-dependencies]
+image = { version = "^0.24", default-features = false, features = ["png"] }
