@@ -1,4 +1,3 @@
-use std::borrow::Borrow;
 use std::collections::HashMap;
 use std::io::{Cursor, Read, Write};
 use std::ops::{BitAnd, BitOr, Shl, Shr};
