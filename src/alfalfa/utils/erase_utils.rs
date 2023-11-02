@@ -49,7 +49,7 @@ impl EraseRegion {
 
 pub trait EraseRegionsProvider {
     fn get_erase_regions(&self) -> Result<Option<Vec<EraseRegion>>>;
-    fn set_erase_regions(&mut self, regions: Vec<EraseRegion>) -> Result<()>;
+    fn set_erase_regions(&mut self, regions: &[EraseRegion]) -> Result<()>;
 }
 
 impl EraseRegionsProvider for AlfalfaData {
@@ -71,7 +71,7 @@ impl EraseRegionsProvider for AlfalfaData {
         }
     }
 
-    fn set_erase_regions(&mut self, regions: Vec<EraseRegion>) -> Result<()> {
+    fn set_erase_regions(&mut self, regions: &[EraseRegion]) -> Result<()> {
         let mut data = Vec::new();
         {
             let mut writer = BitWriter::new(Cursor::new(&mut data));
