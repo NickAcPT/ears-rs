@@ -107,10 +107,30 @@ pub fn read_alfalfa(image: &RgbaImage) -> Result<Option<AlfalfaData>> {
         let index = data
             .read_u8()
             .map_err(|e| (e, "Unable to read alfalfa key index"))?;
-        let key = if (index as usize) >= PREDEF_KEYS.len() {
-            format!("!unk{}", index)
+        let key = if index < 64 {
+            if (index as usize) < PREDEF_KEYS.len() {
+                PREDEF_KEYS[index as usize].to_string()
+            } else {
+                format!("!unk{}", index)
+            }
         } else {
-            PREDEF_KEYS[index as usize].to_string()
+            let mut out = String::new();
+            out.push(index as char);
+
+            loop {
+                let b = data
+                    .read_u8()
+                    .map_err(|e| (e, "Unable to read alfalfa key (2)"))?;
+
+                if (b & 0x80) != 0 {
+                    out.push((b & 0x7F) as char);
+                    break;
+                } else {
+                    out.push(b as char);
+                }
+            }
+
+            out
         };
 
         if key == "END" {
@@ -281,18 +301,18 @@ mod tests {
         let image = image.to_rgba8();
 
         let map = read_alfalfa(&image)?.unwrap();
-        
+
         let mut out_image = image.clone();
-        
+
         write_alfalfa(&map, &mut out_image)?;
-        
+
         let out_map = read_alfalfa(&out_image)?.unwrap();
-        
+
         assert_eq!(map, out_map);
-        
+
         Ok(())
     }
-    
+
     #[test]
     fn alfalfa_read_works() -> Result<()> {
         let image = image::open("test_images/ears_v1_nickac_sample.png").unwrap();
@@ -493,6 +513,40 @@ mod tests {
         ];
 
         assert_eq!(format!("{:?}", out), format!("{:?}", expected));
+
+        Ok(())
+    }
+
+    #[test]
+    fn alfalfa_read_works_when_extra_data() -> Result<()> {
+        let image = image::open("test_images/alfalfa-extra-data.png").unwrap();
+        let image = image.to_rgba8();
+
+        let map = read_alfalfa(&image)?.unwrap();
+
+        let mut expected = HashMap::new();
+        expected.insert(
+            "erase".to_string(),
+            vec![136, 129, 143, 34, 6, 52, 231, 72, 248, 92, 228],
+        );
+        expected.insert(
+            "wing".to_string(),
+            vec![
+                137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82, 0, 0, 0, 16, 0, 0, 0,
+                16, 8, 6, 0, 0, 0, 31, 243, 255, 97, 0, 0, 0, 45, 73, 68, 65, 84, 120, 218, 99, 24,
+                38, 224, 251, 129, 55, 241, 223, 183, 190, 10, 165, 72, 243, 219, 201, 119, 130,
+                65, 52, 89, 6, 128, 52, 131, 216, 96, 154, 20, 0, 215, 52, 208, 96, 20, 140, 2, 0,
+                26, 77, 28, 132, 149, 91, 204, 220, 0, 0, 0, 0, 73, 69, 78, 68, 174, 66, 96, 130,
+            ],
+        );
+        expected.insert("acab".to_string(), vec![49, 54, 49]);
+
+        let expected = AlfalfaData {
+            version: 1,
+            data: expected,
+        };
+
+        assert_eq!(expected, map);
 
         Ok(())
     }
