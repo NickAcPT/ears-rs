@@ -5,8 +5,8 @@ use crate::parser::utils::to_argb_hex;
 use crate::utils::errors::Result;
 
 pub(crate) mod utils;
-mod v0;
-mod v1;
+pub mod v0;
+pub mod v1;
 
 pub trait EarsFeaturesWriter {
     fn write(image: &mut RgbaImage, features: &EarsFeatures) -> Result<()>;
