@@ -9,7 +9,9 @@ use crate::{
     utils::{bit_writer::BitWriter, errors::Result},
 };
 
-impl EarsParserV1 {
+pub struct EarsWriterV1;
+
+impl EarsWriterV1 {
     fn write_features<W: Write>(feat: &EarsFeatures, writer: &mut BitWriter<W>) -> Result<()> {
         writer.write_long(8, 0)?; // version
 
@@ -90,7 +92,7 @@ impl EarsParserV1 {
     }
 }
 
-impl EarsFeaturesWriter for EarsParserV1 {
+impl EarsFeaturesWriter for EarsWriterV1 {
 
     fn write(image: &mut image::RgbaImage, features: &crate::features::EarsFeatures) -> Result<()> {
         let mut data = Vec::new();
@@ -160,7 +162,7 @@ mod tests {
         
         let mut image = RgbaImage::new(64, 64);
         
-        EarsParserV1::write(&mut image, &features)?;
+        EarsWriterV1::write(&mut image, &features)?;
         let result = EarsParserV1::parse(&image)?;
         
         assert_eq!(result, Some(features));
