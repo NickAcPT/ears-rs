@@ -41,8 +41,19 @@ impl AlfalfaData {
             data: HashMap::new(),
         }
     }
+    
+    pub fn get_data_raw(&self) -> &HashMap<String, Vec<u8>> {
+        &self.data
+    }
+    
+    pub fn new_raw(version: u8, data: HashMap<String, Vec<u8>>) -> Self {
+        Self {
+            version,
+            data,
+        }
+    }
 
-    pub(crate) fn get_data_internal(&self, key: &'static str) -> Option<&[u8]> {
+    pub fn get_data_internal(&self, key: &'static str) -> Option<&[u8]> {
         self.data.get(key).map(|v| v.as_slice())
     }
 
@@ -50,7 +61,7 @@ impl AlfalfaData {
         self.get_data_internal(key.into())
     }
     
-    pub(crate) fn set_data_internal(&mut self, key: &'static str, value: Vec<u8>) {
+    pub fn set_data_internal(&mut self, key: &'static str, value: Vec<u8>) {
         self.data.insert(key.to_owned(), value);
     }
     
