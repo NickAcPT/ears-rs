@@ -5,7 +5,7 @@ use crate::{
         data::{ear::EarMode, tail::TailMode, wing::WingMode},
         EarsFeatures,
     },
-    parser::{utils::from_argb_hex, v1::parser::EarsParserV1, EarsFeaturesWriter},
+    parser::{utils::from_argb_hex, EarsFeaturesWriter},
     utils::{bit_writer::BitWriter, errors::Result},
 };
 
