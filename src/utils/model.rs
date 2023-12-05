@@ -42,6 +42,14 @@ impl AlfalfaData {
         }
     }
     
+    pub fn into_raw(self) -> (u8, HashMap<String, Vec<u8>>) {
+        (self.version, self.data)
+    }
+    
+    pub fn into_data(self) -> HashMap<String, Vec<u8>> {
+        self.data
+    }
+    
     pub fn get_data_raw(&self) -> &HashMap<String, Vec<u8>> {
         &self.data
     }
