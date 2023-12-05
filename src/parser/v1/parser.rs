@@ -65,11 +65,11 @@ impl EarsFeaturesParser for EarsParserV1 {
         // we're stuck with 3 anchors forever, though
 
         let (ear_mode, ear_anchor) = if ears == 0 {
-            (EarMode::None, None)
+            (EarMode::default(), EarAnchor::default())
         } else {
             (
                 by_ordinal_or!(EarMode, ((ears - 1) / 3) + 1, EarMode::None),
-                Some(by_ordinal_or!(EarAnchor, (ears - 1) % 3, EarAnchor::Center)),
+                by_ordinal_or!(EarAnchor, (ears - 1) % 3, EarAnchor::Center),
             )
         };
 
@@ -199,7 +199,7 @@ mod tests {
         let features = features.unwrap();
 
         assert_eq!(features.ear_mode, EarMode::Around);
-        assert_eq!(features.ear_anchor, Some(EarAnchor::Center));
+        assert_eq!(features.ear_anchor, EarAnchor::Center);
 
         assert!(features.claws);
         assert!(!features.horn);

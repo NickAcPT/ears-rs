@@ -8,6 +8,10 @@ pub(crate) mod utils;
 mod v0;
 mod v1;
 
+pub trait EarsFeaturesWriter {
+    fn write(image: &mut RgbaImage, features: &EarsFeatures) -> Result<()>;
+}
+
 pub(crate) trait EarsFeaturesParser {
     fn get_data_version() -> u8;
 

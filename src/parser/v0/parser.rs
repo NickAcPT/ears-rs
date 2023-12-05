@@ -46,7 +46,7 @@ impl EarsFeaturesParser for EarsParserV0 {
             MagicPixelsV0::Blue => EarAnchor::Center,
             MagicPixelsV0::Green => EarAnchor::Front,
             MagicPixelsV0::Red => EarAnchor::Back
-        )?;
+        )?.unwrap_or_default();
 
         let (claws, horn) = read_magic_pixel!(
             image, 3, (false, false),
@@ -221,7 +221,7 @@ mod tests {
         let features = EarsParserV0::parse(&image).unwrap().unwrap();
 
         assert_eq!(features.ear_mode, EarMode::Out);
-        assert_eq!(features.ear_anchor, Some(EarAnchor::Front));
+        assert_eq!(features.ear_anchor, EarAnchor::Front);
         assert!(features.claws);
         assert!(features.horn);
 
