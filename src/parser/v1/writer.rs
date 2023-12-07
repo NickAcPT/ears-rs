@@ -132,7 +132,7 @@ impl EarsFeaturesWriter for EarsWriterV1 {
 mod tests {
     use image::RgbaImage;
 
-    use crate::{parser::EarsFeaturesParser, features::data::{ear::EarAnchor, tail::TailData, snout::SnoutData}};
+    use crate::{parser::{EarsFeaturesParser, v1::parser::EarsParserV1}, features::data::{ear::EarAnchor, tail::TailData, snout::SnoutData}};
     use super::*;
 
     #[test]
