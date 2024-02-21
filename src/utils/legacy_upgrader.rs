@@ -3,6 +3,11 @@ use itertools::Either;
 
 #[inline]
 fn check_has_transparency(image: &RgbaImage, x1: u32, y1: u32, x2: u32, y2: u32) -> bool {
+    // Assume that our values are from 0 to 64 and scale them to the image's dimensions
+    let scale = image.width() as f32 / 64.0;
+    let (x1, y1) = ((x1 as f32 * scale) as u32, (y1 as f32 * scale) as u32);
+    let (x2, y2) = ((x2 as f32 * scale) as u32, (y2 as f32 * scale) as u32);
+    
     let min_dy = y1.min(y2);
     let max_dy = y1.max(y2);
     let min_dx = x1.min(x2);
@@ -54,7 +59,15 @@ fn copy_rect(
     let (dx2, dy2) = d2;
     let (sx1, sy1) = s1;
     let (sx2, sy2) = s2;
-
+    
+    // Assume that our values are from 0 to 64 and scale them to the image's dimensions
+    let scale = image.width() as f32 / 64.0;
+    let (dx1, dy1) = ((dx1 as f32 * scale) as u32, (dy1 as f32 * scale) as u32);
+    let (dx2, dy2) = ((dx2 as f32 * scale) as u32, (dy2 as f32 * scale) as u32);
+    let (sx1, sy1) = ((sx1 as f32 * scale) as u32, (sy1 as f32 * scale) as u32);
+    let (sx2, sy2) = ((sx2 as f32 * scale) as u32, (sy2 as f32 * scale) as u32);
+    
+    // Do the normal math
     let dy_range = if dy1 < dy2 {
         Either::Left(dy1..dy2)
     } else {
@@ -89,10 +102,14 @@ fn copy_rect(
 }
 
 pub fn upgrade_skin_if_needed(image: RgbaImage) -> RgbaImage {
-    if image.height() == 64 {
+    if image.height() == image.width() {
+        // If our image is 1:1, we don't need to upgrade it
         image
-    } else {
-        let mut new_image = RgbaImage::new(64, 64);
+    } else if image.height() * 2 == image.width() {
+        // Otherwise, if our image is 2:1, we need to upgrade it
+        let scale = image.width() as f32 / 64.0;
+        
+        let mut new_image = RgbaImage::new(image.width(), image.height() + (32f32 * scale) as u32);
         imageops::replace(&mut new_image, &image, 0, 0);
 
         copy_rect(&mut new_image, (24, 48), (20, 52), (4, 16), (8, 20));
@@ -116,6 +133,9 @@ pub fn upgrade_skin_if_needed(image: RgbaImage) -> RgbaImage {
         set_area_transparent(&mut new_image, 48, 48, 64, 64);
 
         new_image
+    } else {
+        // If our image is neither 1:1 nor 2:1, we can't upgrade it since we don't know what it is
+        image
     }
 }
 
@@ -132,7 +152,13 @@ mod tests {
             let new_image = upgrade_skin_if_needed(image);
             let expected_image = image::open(expected).unwrap().to_rgba8();
 
-            assert_eq!(new_image, expected_image);
+            assert_eq!(new_image.dimensions(), expected_image.dimensions(), "Dimensions");
+            
+            new_image.enumerate_pixels().zip(expected_image.enumerate_pixels()).for_each(
+                |((x, y, pixel), (_, _, expected_pixel))| {
+                    assert_eq!(pixel, expected_pixel, "Pixel at ({}, {})", x, y);
+                },
+            );
         }
 
         upgrader_works(
@@ -143,6 +169,11 @@ mod tests {
         upgrader_works(
             "test_images/mister_fix_original.png",
             "test_images/mister_fix_upgraded.png",
+        );
+        
+        upgrader_works(
+            "test_images/mister_fix_original_x256.png",
+            "test_images/mister_fix_upgraded_x256.png",
         );
     }
 }
