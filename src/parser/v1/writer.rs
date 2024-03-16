@@ -8,6 +8,7 @@ use crate::{
     parser::{utils::from_argb_hex, EarsFeaturesWriter},
     utils::{bit_writer::BitWriter, errors::Result},
 };
+use enum_ordinalize::Ordinalize;
 
 pub struct EarsWriterV1;
 
