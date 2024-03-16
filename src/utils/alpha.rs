@@ -4,11 +4,19 @@ macro_rules! define_strip_alpha_func {
 
         #[allow(dead_code)]
         pub fn strip_alpha(image: &mut RgbaImage) {
+            let x_scale = image.width() as f32 / 64.0;
+            let y_scale = image.height() as f32 / 64.0;
             $(
-            for y in $y1..$y2 {
-                for x in $x1..$x2 {
-                    if let Some(pixel) = image.get_pixel_mut_checked(x, y) {
-                        pixel.0[3] = u8::MAX;
+            {
+                let x1 = ($x1 as f32 * x_scale) as u32;
+                let y1 = ($y1 as f32 * y_scale) as u32;
+                let x2 = ($x2 as f32 * x_scale) as u32;
+                let y2 = ($y2 as f32 * y_scale) as u32;
+                for y in y1..y2 {
+                    for x in x1..x2 {
+                        if let Some(pixel) = image.get_pixel_mut_checked(x, y) {
+                            pixel.0[3] = u8::MAX;
+                        }
                     }
                 }
             }
@@ -42,7 +50,7 @@ mod tests {
 
             for (x, y, pixel) in expected_image.enumerate_pixels() {
                 let real_pixel = image.get_pixel(x, y).0;
-                assert_eq!(pixel.0, real_pixel);
+                assert_eq!(pixel.0, real_pixel, "Pixel at ({}, {}) is different", x, y);
             }
         }
 
@@ -57,6 +65,10 @@ mod tests {
         alpha_strip_works(
             "test_images/notch_upgraded.png",
             "test_images/notch_upgraded_alpha_stripped.png",
+        );
+        alpha_strip_works(
+            "test_images/notch_upgraded_hd.png",
+            "test_images/notch_upgraded_alpha_stripped_hd.png",
         );
     }
 }
