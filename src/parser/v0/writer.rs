@@ -210,6 +210,8 @@ fn write_wing_data(image: &mut RgbaImage, wing: &WingData) -> Result<()> {
 
 #[cfg(test)]
 mod tests {
+    use std::{fs::{self, DirEntry}, path::PathBuf};
+
     use image::RgbaImage;
 
     use crate::{
@@ -261,6 +263,58 @@ mod tests {
             "Features are not equal: {:#?} != {:#?}",
             features, features2
         );
+    }
+
+    #[ignore]
+    #[test]
+    fn v0_massive_test_works() -> Result<(), Box<dyn std::error::Error>> {
+        let _ = fs::create_dir("test_images/textures_ears");
+        for entry in fs::read_dir("test_images/textures")? {
+            
+            if let Ok(entry) = entry {
+                //eprintln!("Parsing image {:?}", entry.file_name());
+                
+                let image_bytes = fs::read(entry.path())?;
+
+                if let Ok(image) =
+                    image::load_from_memory_with_format(&image_bytes, image::ImageFormat::Png)
+                {
+                    let image = image.into_rgba8();
+
+                    let features = EarsParserV0::parse(&image);
+
+                    if let Ok(Some(features)) = features {
+                        let mut path = PathBuf::new();
+
+                        path.push("test_images/textures_ears");
+                        path.push(entry.file_name().to_str().unwrap().to_owned() + ".png");
+                        
+                        fs::copy(entry.path(), path)?;
+                        
+                        let mut image2 = RgbaImage::new(64, 64);
+                        EarsWriterV0::write(&mut image2, &features).expect("Expected it to work!");
+
+                        let features2 = EarsParserV0::parse(&image2).unwrap().unwrap();
+
+                        assert_eq!(
+                            features2, features,
+                            "Features are not equal: {:#?} != {:#?}",
+                            features, features2
+                        );
+
+                        println!("Successfully parsed image {:?}", entry.file_name());
+                    } else if let Err(e) = features {
+                        eprintln!("Error parsing image: {:?}", e);
+                    } else {
+                        //eprintln!("No features found in image {:?}", entry.file_name());
+                    }
+                } else {
+                    eprintln!("Could not load image {:?}", entry.file_name());
+                }
+            }
+        }
+
+        Ok(())
     }
 
     #[test]

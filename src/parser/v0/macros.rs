@@ -4,7 +4,7 @@ macro_rules! read_magic_pixel {
            use crate::parser::utils::to_argb_hex;
            use crate::utils::errors::EarsError;
 
-           $image.get_pixel_checked($idx % 4, 32 + ($idx / 4)).ok_or_else(|| EarsError::InvalidMagicPixelLocation($idx)).map(|p| to_argb_hex(p))
+           $image.get_pixel_checked($idx % 4, 32 + ($idx / 4)).ok_or_else(|| EarsError::InvalidMagicPixelLocation($idx)).map(|p| to_argb_hex(&p))
         }
     };
 

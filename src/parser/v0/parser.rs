@@ -74,6 +74,11 @@ impl EarsFeaturesParser for EarsParserV0 {
 
         Ok(Some(features))
     }
+
+    fn detect(image: &RgbaImage) -> bool {
+        return read_magic_pixel!(image, 0)
+            .is_ok_and(|p| MagicPixelsV0::get_by_argb_hex(p) == MagicPixelsV0::Blue);
+    }
 }
 
 fn read_wing_data(image: &RgbaImage) -> Result<Option<WingData>> {
@@ -179,6 +184,8 @@ fn read_tail_data(image: &RgbaImage) -> Result<Option<TailData>> {
 
 #[cfg(test)]
 mod tests {
+    use crate::parser::EarsParser;
+
     use super::*;
 
     #[test]
@@ -214,6 +221,45 @@ mod tests {
         assert_eq!(tail.mode, TailMode::Down);
         assert_eq!(tail.segments, 3);
         assert_eq!(tail.bends, [30.234375, -29.53125, 60.46875, 0.0]); // Rounding go BRRRRRR
+    }
+
+    #[test]
+    fn v0_works_with_alpha_in_ears_data() {
+        let image = image::open("test_images/aa7e0904a404417b944d909b994f3abb.png").unwrap();
+        let image = image.to_rgba8();
+        let features = EarsParserV0::parse(&image).unwrap().unwrap();
+
+        assert_eq!(
+            EarsParser::parse(&image).unwrap().unwrap(),
+            features,
+            "Rip don't match"
+        );
+
+        assert_eq!(
+            features,
+            EarsFeatures {
+                ear_mode: EarMode::Around,
+                ear_anchor: EarAnchor::Center,
+                tail: Some(TailData {
+                    mode: TailMode::Vertical,
+                    segments: 1,
+                    bends: [14.765625, 0.0, 0.0, 0.0]
+                }),
+                snout: Some(SnoutData {
+                    offset: 0,
+                    width: 4,
+                    height: 2,
+                    depth: 2
+                }),
+                wing: None,
+                claws: false,
+                horn: false,
+                chest_size: 0.40625,
+                cape_enabled: false,
+                emissive: false,
+                data_version: 0
+            }
+        );
     }
 
     #[test]
