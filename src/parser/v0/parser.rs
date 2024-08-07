@@ -70,6 +70,8 @@ impl EarsFeaturesParser for EarsParserV0 {
 
         features.emissive = read_magic_pixel!(image, 10)? == MagicPixelsV0::Orange.get_hex();
 
+        features.data_version = Self::get_data_version();
+        
         Ok(Some(features))
     }
 }

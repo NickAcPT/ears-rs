@@ -166,6 +166,7 @@ impl EarsFeaturesParser for EarsParserV1 {
             chest_size,
             cape_enabled,
             emissive,
+            data_version: Self::get_data_version(),
         };
 
         Ok(Some(features))

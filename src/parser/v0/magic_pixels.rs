@@ -1,6 +1,7 @@
 macro_rules! define_v0_magic_pixels {
     ($($name: ident: $hex:expr),+) => {
         #[allow(dead_code, overflowing_literals)]
+        #[derive(Copy, Clone, Hash, PartialEq, Eq)]
         pub(crate) enum MagicPixelsV0 {
             $(
                 $name,

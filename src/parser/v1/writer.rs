@@ -158,6 +158,7 @@ mod tests {
             chest_size: 0.0,
             cape_enabled: true,
             emissive: false,
+            data_version: 1,
         };
         
         

@@ -6,7 +6,7 @@ pub struct WingData {
     pub animated: bool,
 }
 
-#[derive(Ordinalize, Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Ordinalize, Debug, PartialEq, Eq, Clone, Copy, Hash)]
 #[derive(Default)]
 pub enum WingMode {
     None,
