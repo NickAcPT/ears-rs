@@ -49,18 +49,13 @@ pub(crate) fn write_magic_pixel<K: Eq + Hash>(
     value_map: impl Into<HashMap<K, MagicPixelsV0>>,
 ) -> Result<()> {
     let map: HashMap<K, MagicPixelsV0> = value_map.into();
-    
+
     let magic_pixel = *map.get(&value).unwrap_or(&MagicPixelsV0::Unknown);
 
     write_raw_magic_pixel(image, idx, magic_pixel.get_hex())
 }
 
-pub(crate) fn write_raw_magic_pixel(
-    image: &mut RgbaImage,
-    idx: u32,
-    value: u32,
-) -> Result<()> {
-
+pub(crate) fn write_raw_magic_pixel(image: &mut RgbaImage, idx: u32, value: u32) -> Result<()> {
     let magic_pixel = from_argb_hex(value);
 
     let dst_pixel = image

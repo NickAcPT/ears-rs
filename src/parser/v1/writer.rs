@@ -94,7 +94,6 @@ impl EarsWriterV1 {
 }
 
 impl EarsFeaturesWriter for EarsWriterV1 {
-
     fn write(image: &mut image::RgbaImage, features: &crate::features::EarsFeatures) -> Result<()> {
         let mut data = Vec::new();
         let mut cursor = Cursor::new(&mut data);
@@ -103,7 +102,7 @@ impl EarsFeaturesWriter for EarsWriterV1 {
 
             Self::write_features(features, &mut writer)?;
         };
-        let mut data = cursor.into_inner().into_iter();     
+        let mut data = cursor.into_inner().into_iter();
 
         for y in 0..4 {
             for x in 0..4 {
@@ -133,8 +132,11 @@ impl EarsFeaturesWriter for EarsWriterV1 {
 mod tests {
     use image::RgbaImage;
 
-    use crate::{parser::{EarsFeaturesParser, v1::parser::EarsParserV1}, features::data::{ear::EarAnchor, tail::TailData, snout::SnoutData}};
     use super::*;
+    use crate::{
+        features::data::{ear::EarAnchor, snout::SnoutData, tail::TailData},
+        parser::{v1::parser::EarsParserV1, EarsFeaturesParser},
+    };
 
     #[test]
     fn v1_roundtrip_write_works() -> Result<()> {
@@ -144,7 +146,7 @@ mod tests {
             tail: Some(TailData {
                 mode: TailMode::Down,
                 segments: 2,
-                bends: [-10.0, -14.285715, 0.0, 0.0]
+                bends: [-10.0, -14.285715, 0.0, 0.0],
             }),
             snout: Some(SnoutData {
                 offset: 1,
@@ -160,16 +162,14 @@ mod tests {
             emissive: false,
             data_version: 1,
         };
-        
-        
+
         let mut image = RgbaImage::new(64, 64);
-        
+
         EarsWriterV1::write(&mut image, &features)?;
         let result = EarsParserV1::parse(&image)?;
-        
+
         assert_eq!(result, Some(features));
-        
+
         Ok(())
-        
     }
 }

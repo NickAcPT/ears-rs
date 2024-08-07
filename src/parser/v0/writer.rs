@@ -302,7 +302,7 @@ mod tests {
         assert_eq!(snout2.width, snout.width);
         assert_eq!(snout2.height, snout.height);
         assert_eq!(snout2.depth, snout.depth);
-        
+
         assert_eq!(wing2.mode, wing.mode);
         assert_eq!(wing2.animated, wing.animated);
     }

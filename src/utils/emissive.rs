@@ -47,7 +47,7 @@ pub fn apply_emissive_palette(
 
 #[cfg(test)]
 mod tests {
-    use crate::utils::{apply_emissive_palette, extract_emissive_palette, errors::Result};
+    use crate::utils::{apply_emissive_palette, errors::Result, extract_emissive_palette};
 
     #[test]
     fn emissive_texture_works() -> Result<()> {
@@ -61,17 +61,19 @@ mod tests {
             let expected_image = image::open(expected).unwrap().to_rgba8();
             let expected_remainder_image = image::open(expected_remainder).unwrap().to_rgba8();
 
-            image.enumerate_pixels().zip(expected_image.enumerate_pixels()).for_each(
-                |((x, y, pixel), (_, _, expected_pixel))| {
+            image
+                .enumerate_pixels()
+                .zip(expected_image.enumerate_pixels())
+                .for_each(|((x, y, pixel), (_, _, expected_pixel))| {
                     assert_eq!(pixel, expected_pixel, "Pixel at ({}, {})", x, y);
-                },
-            );
-            
-            remainder_emissive.enumerate_pixels().zip(expected_remainder_image.enumerate_pixels()).for_each(
-                |((x, y, pixel), (_, _, expected_pixel))| {
+                });
+
+            remainder_emissive
+                .enumerate_pixels()
+                .zip(expected_remainder_image.enumerate_pixels())
+                .for_each(|((x, y, pixel), (_, _, expected_pixel))| {
                     assert_eq!(pixel, expected_pixel, "Pixel at ({}, {})", x, y);
-                },
-            );
+                });
 
             Ok(())
         }

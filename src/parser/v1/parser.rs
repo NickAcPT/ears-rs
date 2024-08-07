@@ -25,13 +25,11 @@ impl EarsFeaturesParser for EarsParserV1 {
 
     fn parse(image: &RgbaImage) -> Result<Option<EarsFeatures>> {
         macro_rules! by_ordinal_or {
-            ($en: ty, $ordinal: expr, $default: expr) => {
-                {
-                    use enum_ordinalize::Ordinalize;
-                
-                    <$en>::from_ordinal($ordinal as i8).unwrap_or($default)
-                }
-            };
+            ($en: ty, $ordinal: expr, $default: expr) => {{
+                use enum_ordinalize::Ordinalize;
+
+                <$en>::from_ordinal($ordinal as i8).unwrap_or($default)
+            }};
         }
 
         let mut data = Vec::new();

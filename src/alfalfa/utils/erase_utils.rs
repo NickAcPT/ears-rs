@@ -1,8 +1,8 @@
 use std::io::{Cursor, Read, Write};
 
-use crate::utils::{bit_reader::BitReader, bit_writer::BitWriter};
 use crate::utils::errors::Result;
 use crate::utils::model::{AlfalfaData, AlfalfaDataKey};
+use crate::utils::{bit_reader::BitReader, bit_writer::BitWriter};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct EraseRegion {
@@ -172,7 +172,7 @@ mod tests {
             let mut writer = BitWriter::new(Cursor::new(&mut out));
             EraseRegion::encode_regions(&regions, &mut writer)?;
         }
-        
+
         assert_eq!(out, data);
 
         Ok(())

@@ -1,7 +1,6 @@
 use enum_ordinalize::Ordinalize;
 
-#[derive(Ordinalize, Debug, PartialEq, Eq, Clone, Copy, Hash)]
-#[derive(Default)]
+#[derive(Ordinalize, Debug, PartialEq, Eq, Clone, Copy, Hash, Default)]
 pub enum EarMode {
     #[default]
     None,
@@ -16,15 +15,10 @@ pub enum EarMode {
     TallCross,
 }
 
-#[derive(Ordinalize, Debug, PartialEq, Eq, Clone, Copy, Hash)]
-#[derive(Default)]
+#[derive(Ordinalize, Debug, PartialEq, Eq, Clone, Copy, Hash, Default)]
 pub enum EarAnchor {
     #[default]
     Center,
     Front,
     Back,
 }
-
-
-
-

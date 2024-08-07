@@ -6,8 +6,6 @@ pub(crate) fn to_argb_hex(value: &Rgba<u8>) -> u32 {
 
 pub(crate) fn from_argb_hex(value: u32) -> Rgba<u8> {
     let bytes = value.to_be_bytes();
-    
-    Rgba(
-        [bytes[1], bytes[2], bytes[3], bytes[0]]
-    )
+
+    Rgba([bytes[1], bytes[2], bytes[3], bytes[0]])
 }

@@ -578,7 +578,13 @@ mod tests {
         let mut out_image = image.clone();
 
         strip_alpha(&mut out_image);
-        write_alfalfa(&AlfalfaData { version: 1, data: map.clone() }, &mut out_image)?;
+        write_alfalfa(
+            &AlfalfaData {
+                version: 1,
+                data: map.clone(),
+            },
+            &mut out_image,
+        )?;
 
         let out_map = read_alfalfa(&out_image)?.unwrap();
 

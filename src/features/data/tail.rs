@@ -7,8 +7,7 @@ pub struct TailData {
     pub bends: [f32; 4],
 }
 
-#[derive(Ordinalize, Debug, PartialEq, Eq, Clone, Copy, Hash)]
-#[derive(Default)]
+#[derive(Ordinalize, Debug, PartialEq, Eq, Clone, Copy, Hash, Default)]
 pub enum TailMode {
     None,
     #[default]
@@ -17,5 +16,3 @@ pub enum TailMode {
     Up,
     Vertical,
 }
-
-

@@ -41,24 +41,21 @@ impl AlfalfaData {
             data: HashMap::new(),
         }
     }
-    
+
     pub fn into_raw(self) -> (u8, HashMap<String, Vec<u8>>) {
         (self.version, self.data)
     }
-    
+
     pub fn into_data(self) -> HashMap<String, Vec<u8>> {
         self.data
     }
-    
+
     pub fn get_data_raw(&self) -> &HashMap<String, Vec<u8>> {
         &self.data
     }
-    
+
     pub fn new_raw(version: u8, data: HashMap<String, Vec<u8>>) -> Self {
-        Self {
-            version,
-            data,
-        }
+        Self { version, data }
     }
 
     pub fn get_data_internal(&self, key: &'static str) -> Option<&[u8]> {
@@ -68,15 +65,15 @@ impl AlfalfaData {
     pub fn get_data(&self, key: AlfalfaDataKey) -> Option<&[u8]> {
         self.get_data_internal(key.into())
     }
-    
+
     pub fn set_data_internal(&mut self, key: &'static str, value: Vec<u8>) {
         self.data.insert(key.to_owned(), value);
     }
-    
+
     pub fn set_data(&mut self, key: AlfalfaDataKey, value: Vec<u8>) {
         self.set_data_internal(key.into(), value);
     }
-    
+
     pub fn is_empty(&self) -> bool {
         self.data.is_empty()
     }

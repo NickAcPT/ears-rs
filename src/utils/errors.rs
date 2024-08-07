@@ -27,7 +27,7 @@ pub enum EarsError {
     #[error("Cannot write more than 1428 bytes of data (got {0} bytes)")]
     AlfalfaDataTooLarge(usize),
     #[error("Unable to convert big uint to u32")]
-    UnableToConvertBigUintToU32
+    UnableToConvertBigUintToU32,
 }
 
 impl From<(std::io::Error, &'static str)> for EarsError {
