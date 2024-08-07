@@ -17,5 +17,5 @@ pub struct EarsFeatures {
     pub cape_enabled: bool,
     pub emissive: bool,
 
-    pub(crate) data_version: u8,
+    pub data_version: u8,
 }
