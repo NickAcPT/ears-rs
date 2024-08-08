@@ -72,14 +72,15 @@ impl EarsFeaturesWriter for EarsWriterV0 {
             write_tail_data(image, &tail_data)?;
         }
 
-        if let Some(snout_data) = features.snout {
-            write_snout_data(image, &snout_data)?;
-        }
+        let etc = if let Some(snout_data) = features.snout {
+            write_snout_data(image, &snout_data)?
+        } else {
+            0
+        };
 
         let chest_size = (features.chest_size * 128.0) as u32;
 
-        let etc =
-            read_magic_pixel!(image, 7)? | (chest_size << 16) | (features.cape_enabled as u32) << 4;
+        let etc = etc | (chest_size << 16) | (features.cape_enabled as u32) << 4;
 
         write_raw_magic_pixel(image, 7, etc)?;
 
@@ -158,7 +159,7 @@ fn write_tail_data(image: &mut RgbaImage, tail: &TailData) -> Result<()> {
     Ok(())
 }
 
-fn write_snout_data(image: &mut RgbaImage, snout: &SnoutData) -> Result<()> {
+fn write_snout_data(image: &mut RgbaImage, snout: &SnoutData) -> Result<u32> {
     let snout_depth = snout.depth.min(8);
     let mut snout_height = snout.height.min(4);
     let snout_width = snout.width.min(7);
@@ -174,7 +175,7 @@ fn write_snout_data(image: &mut RgbaImage, snout: &SnoutData) -> Result<()> {
     write_raw_magic_pixel(image, 6, snout as u32)?;
     write_raw_magic_pixel(image, 7, etc as u32)?;
 
-    Ok(())
+    Ok(etc as u32)
 }
 
 fn write_wing_data(image: &mut RgbaImage, wing: &WingData) -> Result<()> {
@@ -218,7 +219,7 @@ mod tests {
     use image::RgbaImage;
 
     use crate::{
-        features::data::tail::TailMode,
+        features::{data::tail::TailMode, EarsFeatures},
         parser::{
             v0::{parser::EarsParserV0, writer::EarsWriterV0},
             EarsFeaturesParser, EarsFeaturesWriter,
@@ -361,5 +362,45 @@ mod tests {
 
         assert_eq!(wing2.mode, wing.mode);
         assert_eq!(wing2.animated, wing.animated);
+    }
+
+    #[test]
+    fn v0_can_change_chest_properly() {
+        let mut image = RgbaImage::new(64, 64);
+
+        let features = EarsFeatures {
+            chest_size: 0.45,
+            ..Default::default()
+        };
+
+        // First, we write the features to the image - in this case, it's just the chest size
+        EarsWriterV0::write(&mut image, &features).expect("Expected it to work!");
+
+        // Now, we parse the image to get the features back
+        let mut features2 = EarsParserV0::parse(&image).unwrap().unwrap();
+
+        // Sanity check
+        assert!(
+            (features2.chest_size - 0.45).abs() < 0.01,
+            "Chest size is not equal: {} != {}",
+            features2.chest_size,
+            0.45
+        );
+
+        // Ears Manipulator workflow: User wants to change the chest size to 0.0
+        features2.chest_size = 0.0;
+
+        // Now, we write the features back to the image
+        EarsWriterV0::write(&mut image, &features2).expect("Expected it to work!");
+
+        // Check that our changes were successful
+        let features3 = EarsParserV0::parse(&image).unwrap().unwrap();
+
+        assert!(
+            (features3.chest_size - 0.0).abs() < 0.01,
+            "Chest size is not equal: {} != {}",
+            features3.chest_size,
+            0.0
+        );
     }
 }
