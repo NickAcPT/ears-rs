@@ -2,8 +2,10 @@ use image::{Rgb, Rgba, RgbaImage};
 
 use crate::{parser::EarsParser, utils::errors::Result};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct EarsEmissivePalette(pub Vec<Rgb<u8>>);
+
+pub const MAX_EMISSIVE_COLORS: usize = 16;
 
 impl From<Vec<Rgb<u8>>> for EarsEmissivePalette {
     fn from(palette: Vec<Rgb<u8>>) -> Self {
@@ -16,7 +18,6 @@ impl From<EarsEmissivePalette> for Vec<Rgb<u8>> {
         palette.0
     }
 }
-
 
 pub fn extract_emissive_palette(skin: &RgbaImage) -> Result<Option<EarsEmissivePalette>> {
     if EarsParser::parse(&skin)?.filter(|f| f.emissive).is_none() {
@@ -41,6 +42,30 @@ pub fn extract_emissive_palette(skin: &RgbaImage) -> Result<Option<EarsEmissiveP
     Ok(Some(EarsEmissivePalette(emissive_palette)))
 }
 
+pub fn write_emissive_palette(
+    skin: &mut RgbaImage,
+    emissive_palette: &EarsEmissivePalette,
+) -> Result<()> {
+    let pixels: &[Rgb<u8>] = &emissive_palette.0;
+
+    let mut idx = 0;
+    for x in 52..56 {
+        for y in 32..36 {
+            if let Some(px) = skin.get_pixel_mut_checked(x, y) {
+                let pixel = pixels
+                    .get(idx)
+                    .map_or(Rgba([0, 0, 0, 0]), |&Rgb([r, g, b])| Rgba([r, g, b, 255]));
+                
+                *px = pixel;
+            }
+
+            idx += 1;
+        }
+    }
+
+    Ok(())
+}
+
 pub fn apply_emissive_palette(
     texture: &mut RgbaImage,
     emissive_palette: &EarsEmissivePalette,
@@ -61,7 +86,9 @@ pub fn apply_emissive_palette(
 
 #[cfg(test)]
 mod tests {
-    use crate::utils::{apply_emissive_palette, errors::Result, extract_emissive_palette};
+    use image::RgbaImage;
+
+    use crate::{features::EarsFeatures, parser::{v0::writer::EarsWriterV0, EarsFeaturesWriter}, utils::{apply_emissive_palette, errors::Result, extract_emissive_palette, write_emissive_palette}};
 
     #[test]
     fn emissive_texture_works() -> Result<()> {
@@ -98,6 +125,27 @@ mod tests {
             "test_images/emissive-after.png",
         )?;
 
+        Ok(())
+    }
+    
+    #[test]
+    fn emissive_writing_works() -> Result<()> {
+        let original = image::open("test_images/emissive-before.png").unwrap().to_rgba8();
+        let palette = extract_emissive_palette(&original)?.unwrap();
+        
+        let mut image = RgbaImage::new(64, 64);
+        
+        EarsWriterV0::write(&mut image, &EarsFeatures {
+            emissive: true,
+            ..Default::default()
+        })?;
+        
+        write_emissive_palette(&mut image, &palette)?;
+
+        let written_palette = extract_emissive_palette(&image)?;
+        
+        assert_eq!(Some(palette), written_palette);
+        
         Ok(())
     }
 }
