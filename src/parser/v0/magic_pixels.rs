@@ -21,7 +21,7 @@ macro_rules! define_v0_magic_pixels {
             #[allow(dead_code, overflowing_literals)]
             pub(crate) fn get_by_argb_hex(hex: u32) -> MagicPixelsV0 {
                 let hex = hex | 0xFF000000;
-                
+
                 match hex {
                     $(
                         $hex => MagicPixelsV0::$name,

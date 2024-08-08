@@ -210,7 +210,10 @@ fn write_wing_data(image: &mut RgbaImage, wing: &WingData) -> Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use std::{fs::{self}, path::PathBuf};
+    use std::{
+        fs::{self},
+        path::PathBuf,
+    };
 
     use image::RgbaImage;
 
@@ -270,10 +273,9 @@ mod tests {
     fn v0_massive_test_works() -> Result<(), Box<dyn std::error::Error>> {
         let _ = fs::create_dir("test_images/textures_ears");
         for entry in fs::read_dir("test_images/textures")? {
-            
             if let Ok(entry) = entry {
                 //eprintln!("Parsing image {:?}", entry.file_name());
-                
+
                 let image_bytes = fs::read(entry.path())?;
 
                 if let Ok(image) =
@@ -288,9 +290,9 @@ mod tests {
 
                         path.push("test_images/textures_ears");
                         path.push(entry.file_name().to_str().unwrap().to_owned() + ".png");
-                        
+
                         fs::copy(entry.path(), path)?;
-                        
+
                         let mut image2 = RgbaImage::new(64, 64);
                         EarsWriterV0::write(&mut image2, &features).expect("Expected it to work!");
 

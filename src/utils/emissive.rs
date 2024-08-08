@@ -55,7 +55,7 @@ pub fn write_emissive_palette(
                 let pixel = pixels
                     .get(idx)
                     .map_or(Rgba([0, 0, 0, 0]), |&Rgb([r, g, b])| Rgba([r, g, b, 255]));
-                
+
                 *px = pixel;
             }
 
@@ -88,7 +88,14 @@ pub fn apply_emissive_palette(
 mod tests {
     use image::RgbaImage;
 
-    use crate::{features::EarsFeatures, parser::{v0::writer::EarsWriterV0, EarsFeaturesWriter}, utils::{apply_emissive_palette, errors::Result, extract_emissive_palette, write_emissive_palette}};
+    use crate::{
+        features::EarsFeatures,
+        parser::{v0::writer::EarsWriterV0, EarsFeaturesWriter},
+        utils::{
+            apply_emissive_palette, errors::Result, extract_emissive_palette,
+            write_emissive_palette,
+        },
+    };
 
     #[test]
     fn emissive_texture_works() -> Result<()> {
@@ -127,25 +134,30 @@ mod tests {
 
         Ok(())
     }
-    
+
     #[test]
     fn emissive_writing_works() -> Result<()> {
-        let original = image::open("test_images/emissive-before.png").unwrap().to_rgba8();
+        let original = image::open("test_images/emissive-before.png")
+            .unwrap()
+            .to_rgba8();
         let palette = extract_emissive_palette(&original)?.unwrap();
-        
+
         let mut image = RgbaImage::new(64, 64);
-        
-        EarsWriterV0::write(&mut image, &EarsFeatures {
-            emissive: true,
-            ..Default::default()
-        })?;
-        
+
+        EarsWriterV0::write(
+            &mut image,
+            &EarsFeatures {
+                emissive: true,
+                ..Default::default()
+            },
+        )?;
+
         write_emissive_palette(&mut image, &palette)?;
 
         let written_palette = extract_emissive_palette(&image)?;
-        
+
         assert_eq!(Some(palette), written_palette);
-        
+
         Ok(())
     }
 }
