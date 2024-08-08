@@ -210,7 +210,7 @@ fn write_wing_data(image: &mut RgbaImage, wing: &WingData) -> Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use std::{fs::{self, DirEntry}, path::PathBuf};
+    use std::{fs::{self}, path::PathBuf};
 
     use image::RgbaImage;
 

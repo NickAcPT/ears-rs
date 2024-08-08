@@ -32,7 +32,7 @@ macro_rules! read_magic_pixel {
     };
 }
 
-use std::{borrow::Borrow, collections::HashMap, hash::Hash};
+use std::{collections::HashMap, hash::Hash};
 
 use image::RgbaImage;
 pub(crate) use read_magic_pixel;
