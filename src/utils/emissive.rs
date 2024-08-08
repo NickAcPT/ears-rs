@@ -2,7 +2,21 @@ use image::{Rgb, Rgba, RgbaImage};
 
 use crate::{parser::EarsParser, utils::errors::Result};
 
+#[derive(Debug, Clone)]
 pub struct EarsEmissivePalette(pub Vec<Rgb<u8>>);
+
+impl From<Vec<Rgb<u8>>> for EarsEmissivePalette {
+    fn from(palette: Vec<Rgb<u8>>) -> Self {
+        Self(palette)
+    }
+}
+
+impl From<EarsEmissivePalette> for Vec<Rgb<u8>> {
+    fn from(palette: EarsEmissivePalette) -> Self {
+        palette.0
+    }
+}
+
 
 pub fn extract_emissive_palette(skin: &RgbaImage) -> Result<Option<EarsEmissivePalette>> {
     if EarsParser::parse(&skin)?.filter(|f| f.emissive).is_none() {
