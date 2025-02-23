@@ -6,10 +6,10 @@ edition = "2021"
 authors = ["NickAcPT"]
 
 [dependencies]
-image = { version = "0.25.0", default-features = false }
+image = { version = "^0.25", default-features = false }
 ibig = "^0.3"
-itertools = "0.12.1"
-thiserror = "^1"
+itertools = "^0.14"
+thiserror = "^2"
 enum-ordinalize = "4.3.0"
 byteorder = "1.5.0"
 
