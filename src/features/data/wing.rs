@@ -14,4 +14,6 @@ pub enum WingMode {
     SymmetricSingle,
     AsymmetricL,
     AsymmetricR,
+    AsymmetricDual,
+    Flat,
 }

@@ -87,7 +87,9 @@ fn read_wing_data(image: &RgbaImage) -> Result<Option<WingData>> {
         MagicPixelsV0::Pink => WingMode::SymmetricDual,
         MagicPixelsV0::Green => WingMode::SymmetricSingle,
         MagicPixelsV0::Cyan => WingMode::AsymmetricL,
-        MagicPixelsV0::Orange => WingMode::AsymmetricR
+        MagicPixelsV0::Orange => WingMode::AsymmetricR,
+        MagicPixelsV0::Purple => WingMode::AsymmetricDual,
+        MagicPixelsV0::Purple2 => WingMode::Flat
     )?;
 
     if mode == WingMode::None {
@@ -159,7 +161,11 @@ fn read_tail_data(image: &RgbaImage) -> Result<Option<TailData>> {
         MagicPixelsV0::Blue => TailMode::Down,
         MagicPixelsV0::Green => TailMode::Back,
         MagicPixelsV0::Purple => TailMode::Up,
-        MagicPixelsV0::Orange => TailMode::Vertical
+        MagicPixelsV0::Orange => TailMode::Vertical,
+        MagicPixelsV0::Pink => TailMode::Cross,
+        MagicPixelsV0::Purple2 => TailMode::CrossOverlap,
+        MagicPixelsV0::White => TailMode::Star,
+        MagicPixelsV0::Gray => TailMode::StarOverlap
     )?;
 
     if mode == TailMode::None {
@@ -260,6 +266,44 @@ mod tests {
                 data_version: 0
             }
         );
+    }
+
+    #[test]
+    fn v0_new_tail_modes_work() {
+        #[rustfmt::skip]
+        let modes = [
+            ("test_images/ears-cross-overlapping.png",TailMode::CrossOverlap),
+            ("test_images/ears-cross-tail.png", TailMode::Cross),
+            ("test_images/ears-star-45.png", TailMode::Star),
+            ("test_images/ears-overlapstar-45.png", TailMode::StarOverlap),
+        ];
+
+        for (file, mode) in modes {
+            let image = image::open(file).unwrap();
+            let image = image.to_rgba8();
+            let features = EarsParserV0::parse(&image).unwrap().unwrap();
+            let tail = features.tail.unwrap();
+
+            assert_eq!(tail.mode, mode);
+        }
+    }
+
+    #[test]
+    fn v0_new_wing_modes_work() {
+        #[rustfmt::skip]
+        let modes = [
+            ("test_images/ears-wing-flat.png", WingMode::Flat),
+            ("test_images/ears-wing-asymmetricdual.png", WingMode::AsymmetricDual),
+        ];
+
+        for (file, mode) in modes {
+            let image = image::open(file).unwrap();
+            let image = image.to_rgba8();
+            let features = EarsParserV0::parse(&image).unwrap().unwrap();
+            let wing = features.wing.unwrap();
+
+            assert_eq!(wing.mode, mode);
+        }
     }
 
     #[test]

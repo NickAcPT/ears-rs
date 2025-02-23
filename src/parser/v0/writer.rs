@@ -12,7 +12,7 @@ use crate::{
     },
     parser::{
         v0::{
-            macros::{read_magic_pixel, write_magic_pixel, write_raw_magic_pixel},
+            macros::{write_magic_pixel, write_raw_magic_pixel},
             magic_pixels::MagicPixelsV0,
         },
         EarsFeaturesWriter,
@@ -135,6 +135,10 @@ fn write_tail_data(image: &mut RgbaImage, tail: &TailData) -> Result<()> {
             (TailMode::Back, MagicPixelsV0::Green),
             (TailMode::Up, MagicPixelsV0::Purple),
             (TailMode::Vertical, MagicPixelsV0::Orange),
+            (TailMode::Cross, MagicPixelsV0::Pink),
+            (TailMode::CrossOverlap, MagicPixelsV0::Purple2),
+            (TailMode::Star, MagicPixelsV0::White),
+            (TailMode::StarOverlap, MagicPixelsV0::Gray),
         ],
     )?;
 
@@ -188,6 +192,8 @@ fn write_wing_data(image: &mut RgbaImage, wing: &WingData) -> Result<()> {
             (WingMode::SymmetricSingle, MagicPixelsV0::Green),
             (WingMode::AsymmetricL, MagicPixelsV0::Cyan),
             (WingMode::AsymmetricR, MagicPixelsV0::Orange),
+            (WingMode::AsymmetricDual, MagicPixelsV0::Purple),
+            (WingMode::Flat, MagicPixelsV0::Purple2),
         ],
     )?;
 

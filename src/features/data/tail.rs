@@ -15,4 +15,8 @@ pub enum TailMode {
     Back,
     Up,
     Vertical,
+    Cross,
+    CrossOverlap,
+    Star,
+    StarOverlap,
 }
