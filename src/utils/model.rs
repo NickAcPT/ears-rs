@@ -77,4 +77,12 @@ impl AlfalfaData {
     pub fn is_empty(&self) -> bool {
         self.data.is_empty()
     }
+    
+    pub fn remove_data(&mut self, key: AlfalfaDataKey) {
+        self.remove_data_internal(key.into())
+    }
+    
+    pub fn remove_data_internal(&mut self, key: &'static str) {
+        self.data.remove(key);
+    }
 }
