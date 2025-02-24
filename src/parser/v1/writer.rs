@@ -134,7 +134,7 @@ mod tests {
 
     use super::*;
     use crate::{
-        features::data::{ear::EarAnchor, snout::SnoutData, tail::TailData},
+        features::data::{ear::EarAnchor, snout::SnoutData, tail::TailData, wing::WingData},
         parser::{v1::parser::EarsParserV1, EarsFeaturesParser},
     };
 
@@ -169,6 +169,44 @@ mod tests {
         let result = EarsParserV1::parse(&image)?;
 
         assert_eq!(result, Some(features));
+
+        Ok(())
+    }
+    
+    #[test]
+    fn v1_roundtrip_write_works_with_new_data() -> Result<()> {
+        let features = EarsFeatures {
+            ear_mode: EarMode::Around,
+            ear_anchor: EarAnchor::Center,
+            tail: Some(TailData {
+                mode: TailMode::StarOverlap,
+                segments: 2,
+                bends: [-10.0, -14.285715, 0.0, 0.0],
+            }),
+            snout: Some(SnoutData {
+                offset: 1,
+                width: 4,
+                height: 2,
+                depth: 2,
+            }),
+            wing: Some(WingData {
+                mode: WingMode::Flat,
+                ..Default::default()
+            }),
+            claws: true,
+            horn: false,
+            chest_size: 0.0,
+            cape_enabled: true,
+            emissive: false,
+            data_version: 1,
+        };
+
+        let mut image = RgbaImage::new(64, 64);
+
+        EarsWriterV1::write(&mut image, &features)?;
+        let result = EarsParserV1::parse(&image)?;
+
+        assert_ne!(result, Some(features));
 
         Ok(())
     }
