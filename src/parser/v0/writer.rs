@@ -24,6 +24,11 @@ pub struct EarsWriterV0;
 
 impl EarsFeaturesWriter for EarsWriterV0 {
     fn write(image: &mut RgbaImage, features: &EarsFeatures) -> Result<()> {
+        // Clear out the magic pixels
+        for idx in 0..(4 * 4) {
+            write_raw_magic_pixel(image, idx, MagicPixelsV0::Unknown.get_hex())?;
+        }
+        
         // Ears V0 detection pixel
         write_raw_magic_pixel(image, 0, MagicPixelsV0::Blue.get_hex())?;
 
@@ -222,7 +227,7 @@ mod tests {
         path::PathBuf,
     };
 
-    use image::RgbaImage;
+    use image::{Rgba, RgbaImage};
 
     use crate::{
         features::{data::tail::TailMode, EarsFeatures},
