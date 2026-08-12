@@ -1,6 +1,6 @@
 use image::RgbaImage;
 
-use crate::alfalfa::utils::EraseRegionsProvider;
+use crate::alfalfa::utils::{EraseRegion, EraseRegionsProvider};
 use crate::utils::errors::Result;
 
 pub fn process_erase_regions(image: &mut RgbaImage) -> Result<()> {

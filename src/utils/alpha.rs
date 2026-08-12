@@ -34,25 +34,26 @@ pub(crate) const FORCED_OPAQUE_REGIONS: &[Rectangle] = &[
 ];
 
 pub(crate) const LEG_BOTTOM_HALF_REGIONS: &[Rectangle] = &[
-    rectangle(24, 48, 4, 4, true),
-    rectangle(16, 58, 16, 6, true),
-    rectangle(8, 16, 4, 4, true),
-    rectangle(0, 26, 16, 6, true),
-    rectangle(8, 32, 4, 4, false),
-    rectangle(0, 42, 16, 6, false),
-    rectangle(8, 48, 4, 4, false),
-    rectangle(0, 58, 16, 6, false),
+    rectangle(24, 48, 4, 4, true),  // left leg bottom
+    rectangle(16, 58, 16, 6, true), // left leg
+    rectangle(8, 16, 4, 4, true),   // right leg bottom
+    rectangle(0, 26, 16, 6, true),  // right leg
+    rectangle(8, 32, 4, 4, false),  // right leg pant bottom
+    rectangle(0, 42, 16, 6, false), // right leg pant
+    rectangle(8, 48, 4, 4, false),  // left leg pant bottom
+    rectangle(0, 58, 16, 6, false), // left leg pant
 ];
 
+/// A list of the rectangles that are displaced if full digitigrade legs are enabled.
 pub(crate) const LEG_REGIONS: &[Rectangle] = &[
-    rectangle(20, 48, 8, 4, true),
-    rectangle(16, 52, 16, 12, true),
-    rectangle(4, 16, 8, 4, true),
-    rectangle(0, 20, 16, 12, true),
-    rectangle(4, 32, 8, 4, false),
-    rectangle(0, 36, 16, 12, false),
-    rectangle(4, 48, 8, 4, false),
-    rectangle(0, 52, 16, 12, false),
+    rectangle(20, 48, 8, 4, true),   // left leg pole
+    rectangle(16, 52, 16, 12, true), // left leg
+    rectangle(4, 16, 8, 4, true),    // right leg pole
+    rectangle(0, 20, 16, 12, true),  // right leg
+    rectangle(4, 32, 8, 4, false),   // right leg pant pole
+    rectangle(0, 36, 16, 12, false), // right leg pant
+    rectangle(4, 48, 8, 4, false),   // left leg pant pole
+    rectangle(0, 52, 16, 12, false), // left leg pant
 ];
 
 const FORCED_OPAQUE_REGIONS_WITHOUT_LEG_BOTTOM_REGIONS: &[Rectangle] = &[
@@ -86,7 +87,8 @@ pub fn strip_alpha(image: &mut RgbaImage) {
 }
 
 pub fn strip_alpha_for_features(image: &mut RgbaImage, features: Option<&EarsFeatures>) {
-    let regions = match features.map(|features| features.leg_mode) {
+    let leg_mode = features.map(|features| features.leg_mode);
+    let regions = match leg_mode {
         Some(LegMode::DigitigradePartial) => FORCED_OPAQUE_REGIONS_WITHOUT_LEG_BOTTOM_REGIONS,
         Some(LegMode::DigitigradeFull) => FORCED_OPAQUE_REGIONS_WITHOUT_LEG_REGIONS,
         _ => FORCED_OPAQUE_REGIONS,
@@ -114,7 +116,7 @@ fn strip_alpha_regions(image: &mut RgbaImage, regions: &[Rectangle]) {
 
 #[cfg(test)]
 mod tests {
-    use crate::utils::alpha::strip_alpha;
+    use crate::utils::alpha::{strip_alpha};
 
     #[test]
     fn alpha_stripper_works() {
