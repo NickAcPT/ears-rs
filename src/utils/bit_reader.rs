@@ -90,11 +90,7 @@ impl<R: Read> BitReader<R> {
         let max = (1 << bits) - 1;
         let float = value as f32 / max as f32;
 
-        if sign {
-            Ok(-float)
-        } else {
-            Ok(float)
-        }
+        if sign { Ok(-float) } else { Ok(float) }
     }
 
     pub(crate) fn read_unit(&mut self, bits: u8) -> Result<f32> {

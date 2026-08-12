@@ -1,6 +1,6 @@
 use image::{
-    imageops::{self, crop_imm},
     RgbaImage,
+    imageops::{self, crop_imm},
 };
 
 pub fn convert_ears_cape_to_mojang_cape(ears_cape: RgbaImage) -> RgbaImage {

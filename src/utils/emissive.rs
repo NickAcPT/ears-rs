@@ -90,7 +90,7 @@ mod tests {
 
     use crate::{
         features::EarsFeatures,
-        parser::{v0::writer::EarsWriterV0, EarsFeaturesWriter},
+        parser::{EarsFeaturesWriter, v0::writer::EarsWriterV0},
         utils::{
             apply_emissive_palette, errors::Result, extract_emissive_palette,
             write_emissive_palette,

@@ -1,4 +1,5 @@
 use crate::features::{
+    DataVersion, EarsFeatures,
     data::{
         ear::{EarAnchor, EarMode},
         leg::LegMode,
@@ -7,10 +8,9 @@ use crate::features::{
         tail::{TailData, TailMode},
         wing::{WingAnimationMode, WingData, WingMode},
     },
-    DataVersion, EarsFeatures,
 };
-use crate::parser::utils::to_argb_hex;
 use crate::parser::EarsFeaturesParser;
+use crate::parser::utils::to_argb_hex;
 use crate::utils::bit_reader::BitReader;
 use crate::utils::errors::{EarsError, Result};
 use enum_ordinalize::Ordinalize;

@@ -3,7 +3,7 @@ use std::io::{Cursor, Read, Write};
 use std::ops::{BitAnd, BitOr, Shl, Shr};
 
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
-use ibig::{ubig, UBig};
+use ibig::{UBig, ubig};
 use image::RgbaImage;
 use itertools::Itertools;
 

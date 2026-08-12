@@ -19,7 +19,9 @@ pub enum EarsError {
     NotEnoughSpaceInIntForBitsError(u8),
     #[error("Invalid Alfalfa version: {0}")]
     InvalidAlfalfaVersion(u8),
-    #[error("Cannot write an entry with name {0} - it must start with an ASCII character with value 64 (@) or greater")]
+    #[error(
+        "Cannot write an entry with name {0} - it must start with an ASCII character with value 64 (@) or greater"
+    )]
     InvalidAlfalfaEntryName(String),
     #[error("Cannot write an entry with name {0} - it must only contain ASCII characters")]
     InvalidAlfalfaEntryNameAscii(String),

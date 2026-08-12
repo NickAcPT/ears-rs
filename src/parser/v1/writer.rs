@@ -2,14 +2,14 @@ use std::io::{Cursor, Write};
 
 use crate::{
     features::{
+        EarsFeatures,
         data::{
             ear::EarMode,
             tail::TailMode,
             wing::{WingAnimationMode, WingMode},
         },
-        EarsFeatures,
     },
-    parser::{utils::from_argb_hex, v1::parser::EarsParserV1, EarsFeaturesWriter},
+    parser::{EarsFeaturesWriter, utils::from_argb_hex, v1::parser::EarsParserV1},
     utils::{bit_writer::BitWriter, errors::Result},
 };
 use enum_ordinalize::Ordinalize;
@@ -160,13 +160,13 @@ mod tests {
     use super::*;
     use crate::{
         features::{
+            DataVersion,
             data::{
                 ear::EarAnchor, leg::LegMode, protrusions::Protrusions, snout::SnoutData,
                 tail::TailData, wing::WingData,
             },
-            DataVersion,
         },
-        parser::{v1::parser::EarsParserV1, EarsFeaturesParser},
+        parser::{EarsFeaturesParser, v1::parser::EarsParserV1},
     };
 
     #[test]

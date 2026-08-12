@@ -1,5 +1,6 @@
 use crate::{
     features::{
+        DataVersion, EarsFeatures,
         data::{
             ear::{EarAnchor, EarMode},
             leg::LegMode,
@@ -8,11 +9,10 @@ use crate::{
             tail::{TailData, TailMode},
             wing::{WingAnimationMode, WingData, WingMode},
         },
-        DataVersion, EarsFeatures,
     },
+    parser::EarsFeaturesParser,
     parser::v0::macros::read_magic_pixel,
     parser::v0::magic_pixels::MagicPixelsV0,
-    parser::EarsFeaturesParser,
     utils::errors::{EarsError, Result},
 };
 use image::RgbaImage;

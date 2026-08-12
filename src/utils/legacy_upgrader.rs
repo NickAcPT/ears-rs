@@ -1,4 +1,4 @@
-use image::{imageops, RgbaImage};
+use image::{RgbaImage, imageops};
 use itertools::Either;
 
 #[inline]
