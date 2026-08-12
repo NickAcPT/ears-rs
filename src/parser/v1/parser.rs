@@ -327,4 +327,28 @@ mod tests {
             3
         );
     }
+
+    #[test]
+    fn v1_parses_ears_extended_features() {
+        let image = image::open("test_images/ears_v1_extended_features.png")
+            .unwrap()
+            .to_rgba8();
+        let features = EarsParserV1::parse(&image).unwrap().unwrap();
+
+        assert_eq!(features.data_version, DataVersion::V1(3));
+        assert_eq!(features.leg_mode, LegMode::DigitigradeFull);
+        assert_eq!(features.protrusions, Protrusions::ClawsAndDoubleHalo);
+        assert_eq!(
+            features.wing,
+            Some(WingData {
+                mode: WingMode::Flat,
+                animation_mode: WingAnimationMode::NoFlight,
+            })
+        );
+        let tail = features.tail.unwrap();
+        assert_eq!(tail.mode, TailMode::StarOverlap);
+        assert_eq!(tail.segments, 2);
+        assert!(!tail.animate);
+        assert!(tail.swap_jacket_back);
+    }
 }

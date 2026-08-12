@@ -64,10 +64,9 @@ impl EarsFeaturesParser for EarsParserV0 {
         features.tail = read_tail_data(image)?;
         features.snout = read_snout_data(image)?;
 
-        let etc = read_magic_pixel!(image, 7)?;
-
-        features.chest_size = (((etc & 0x00FF0000) >> 16) as f32 / 128f32).clamp(0.0, 1.0);
-        features.cape_enabled = (etc & 16) != 0;
+        let (chest_size, cape_enabled) = read_chest_data(image)?.unwrap_or_default();
+        features.chest_size = chest_size;
+        features.cape_enabled = cape_enabled;
 
         features.wing = read_wing_data(image)?;
 
@@ -125,8 +124,22 @@ fn read_wing_data(image: &RgbaImage) -> Result<Option<WingData>> {
     }))
 }
 
+fn read_chest_data(image: &RgbaImage) -> Result<Option<(f32, bool)>> {
+    let etc = read_magic_pixel!(image, 7)?;
+    if MagicPixelsV0::get_by_argb_hex(etc) == MagicPixelsV0::Blue {
+        return Ok(None);
+    }
+    Ok(Some((
+        (((etc & 0x00FF0000) >> 16) as f32 / 128f32).clamp(0.0, 1.0),
+        (etc & 16) != 0,
+    )))
+}
+
 fn read_snout_data(image: &RgbaImage) -> Result<Option<SnoutData>> {
     let snout = read_magic_pixel!(image, 6)?;
+    if MagicPixelsV0::get_by_argb_hex(snout) == MagicPixelsV0::Blue {
+        return Ok(None);
+    }
     let etc = read_magic_pixel!(image, 7)?;
 
     let mut snout_offset = ((etc & 0x0000FF00) >> 8) as u8;
@@ -195,19 +208,27 @@ fn read_tail_data(image: &RgbaImage) -> Result<Option<TailData>> {
     if mode == TailMode::None {
         return Ok(None);
     }
-
     let tail_bend = read_magic_pixel!(image, 5)?;
-
-    let tail_bend0 =
-        px_val_to_unit((255 - ((tail_bend as i64 & 0xFF000000_i64) >> 24)) as i32) * 90.0;
-    let tail_bend1 = px_val_to_unit(((tail_bend & 0x00FF0000) >> 16) as i32) * 90.0;
-    let tail_bend2 = px_val_to_unit(((tail_bend & 0x0000FF00) >> 8) as i32) * 90.0;
-    let tail_bend3 = px_val_to_unit((tail_bend & 0x000000FF) as i32) * 90.0;
+    let magic_blue_tail_bend = MagicPixelsV0::get_by_argb_hex(tail_bend) == MagicPixelsV0::Blue;
+    let (tail_bend0, tail_bend1, tail_bend2, tail_bend3) = if magic_blue_tail_bend {
+        (0.0, 0.0, 0.0, 0.0)
+    } else {
+        (
+            px_val_to_unit((255 - ((tail_bend as i64 & 0xFF000000_i64) >> 24)) as i32) * 90.0,
+            px_val_to_unit(((tail_bend & 0x00FF0000) >> 16) as i32) * 90.0,
+            px_val_to_unit(((tail_bend & 0x0000FF00) >> 8) as i32) * 90.0,
+            px_val_to_unit((tail_bend & 0x000000FF) as i32) * 90.0,
+        )
+    };
     let mut data = TailData::default();
 
     data.mode = mode;
     data.bends = [tail_bend0, tail_bend1, tail_bend2, tail_bend3];
-    data.segments = 1 + data.bends.iter().skip(1).filter(|&&x| x != 0.0).count() as u8;
+    data.segments = if magic_blue_tail_bend {
+        0
+    } else {
+        1 + data.bends.iter().skip(1).filter(|&&x| x != 0.0).count() as u8
+    };
 
     Ok(Some(data))
 }
@@ -359,5 +380,29 @@ mod tests {
                 animation_mode: WingAnimationMode::Normal,
             })
         )
+    }
+
+    #[test]
+    fn v0_parses_ears_digitigrade_fixtures() {
+        let partial = image::open("test_images/ears_v0_digitigrade_partial.png")
+            .unwrap()
+            .to_rgba8();
+        let partial = EarsParserV0::parse(&partial).unwrap().unwrap();
+        assert_eq!(partial.leg_mode, LegMode::DigitigradePartial);
+        let tail = partial.tail.unwrap();
+        assert_eq!(tail.mode, TailMode::Star);
+        assert_eq!(tail.segments, 3);
+        assert!(!tail.animate);
+        assert!(tail.swap_jacket_back);
+
+        let full = image::open("test_images/ears_v0_digitigrade_full.png")
+            .unwrap()
+            .to_rgba8();
+        let full = EarsParserV0::parse(&full).unwrap().unwrap();
+        assert_eq!(full.leg_mode, LegMode::DigitigradeFull);
+        assert_eq!(full.tail, None);
+        assert_eq!(full.snout, None);
+        assert_eq!(full.chest_size, 0.0);
+        assert!(!full.cape_enabled);
     }
 }

@@ -89,20 +89,19 @@ fn displace_regions(image: &mut RgbaImage, regions: &[Rectangle]) -> RgbaImage {
 }
 
 fn swap_jacket_back_and_tail(image: &mut RgbaImage) {
-    let mut tail = [Rgba([0, 0, 0, 0]); 8 * 12];
-    for y in 0u32..12 {
-        for x in 0u32..8 {
-            let index = (y * 8 + x) as usize;
-            tail[index] = *image.get_pixel(56 + x, 16 + y);
-        }
-    }
-    for y in 0u32..12 {
-        for x in 0u32..8 {
-            let jacket = *image.get_pixel(32 + x, 36 + 11 - y);
-            image.put_pixel(56 + x, 16 + y, jacket);
-            image.put_pixel(32 + x, 36 + y, tail[(y * 8 + x) as usize]);
-        }
-    }
+    const TAIL_X: u32 = 56;
+    const TAIL_Y: u32 = 16;
+    const JACKET_X: u32 = 32;
+    const JACKET_Y: u32 = 36;
+    const WIDTH: u32 = 8;
+    const HEIGHT: u32 = 12;
+
+    let tail = image::imageops::crop_imm(&*image, TAIL_X, TAIL_Y, WIDTH, HEIGHT).to_image();
+    let jacket = image::imageops::crop_imm(&*image, JACKET_X, JACKET_Y, WIDTH, HEIGHT).to_image();
+    let flipped_jacket = image::imageops::flip_vertical(&jacket);
+
+    image::imageops::replace(image, &flipped_jacket, i64::from(TAIL_X), i64::from(TAIL_Y));
+    image::imageops::replace(image, &tail, i64::from(JACKET_X), i64::from(JACKET_Y));
 }
 
 #[cfg(test)]
@@ -111,12 +110,9 @@ mod tests {
 
     use super::*;
     use crate::{
-        features::{
-            EarsFeatures,
-            data::tail::{TailData, TailMode},
-        },
+        features::EarsFeatures,
         parser::{EarsFeaturesWriter, v0::writer::EarsWriterV0},
-        utils::strip_alpha_for_features,
+        utils::{apply_emissive_palette, extract_emissive_palette, strip_alpha_for_features},
     };
 
     #[test]
@@ -154,25 +150,120 @@ mod tests {
     }
 
     #[test]
-    fn preprocessing_swaps_tail_and_flipped_jacket_back() {
-        let mut image = RgbaImage::new(64, 64);
-        let features = EarsFeatures {
-            tail: Some(TailData {
-                mode: TailMode::Down,
-                segments: 1,
-                swap_jacket_back: true,
-                ..TailData::default()
-            }),
-            ..EarsFeatures::default()
-        };
-        EarsWriterV0::write(&mut image, &features).unwrap();
-        image.put_pixel(56, 16, Rgba([1, 2, 3, 4]));
-        image.put_pixel(32, 47, Rgba([5, 6, 7, 8]));
+    fn preprocessing_matches_ears_tail_swap_fixtures() {
+        for (original, swapped) in [
+            (
+                "test_images/ears_v0_tail_swap_original.png",
+                "test_images/ears_v0_tail_swap_swapped.png",
+            ),
+            (
+                "test_images/ears_v1_tail_swap_original.png",
+                "test_images/ears_v1_tail_swap_swapped.png",
+            ),
+        ] {
+            let mut actual = image::open(original).unwrap().to_rgba8();
+            let expected = image::open(swapped).unwrap().to_rgba8();
 
-        preprocess_skin(&mut image).unwrap();
+            let result = preprocess_skin(&mut actual).unwrap();
+            assert!(
+                result
+                    .features
+                    .as_ref()
+                    .and_then(|features| features.tail.as_ref())
+                    .is_some_and(|tail| tail.swap_jacket_back),
+                "{original} did not parse its jacket swap flag"
+            );
 
-        assert_eq!(*image.get_pixel(32, 36), Rgba([1, 2, 3, 4]));
-        assert_eq!(*image.get_pixel(56, 16), Rgba([5, 6, 7, 8]));
+            assert_eq!(*expected.get_pixel(56, 16), Rgba([0, 0, 255, 255]));
+            assert_eq!(*expected.get_pixel(63, 16), Rgba([255, 0, 255, 255]));
+            assert_eq!(*expected.get_pixel(56, 27), Rgba([0, 255, 255, 255]));
+            assert_eq!(*expected.get_pixel(32, 36), Rgba([0, 255, 0, 255]));
+            assert_eq!(*expected.get_pixel(39, 47), Rgba([255, 255, 0, 255]));
+            for ((x, y, actual_pixel), (_, _, expected_pixel)) in
+                actual.enumerate_pixels().zip(expected.enumerate_pixels())
+            {
+                assert_eq!(
+                    actual_pixel, expected_pixel,
+                    "processed {original} did not match {swapped} at ({x}, {y})"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn preprocessing_matches_ears_digitigrade_displacement_fixtures() {
+        for (original, displaced, leg_mode) in [
+            (
+                "test_images/ears_v0_digitigrade_partial_original.png",
+                "test_images/ears_v0_digitigrade_partial_displaced.png",
+                LegMode::DigitigradePartial,
+            ),
+            (
+                "test_images/ears_v0_digitigrade_full_original.png",
+                "test_images/ears_v0_digitigrade_full_displaced.png",
+                LegMode::DigitigradeFull,
+            ),
+            (
+                "test_images/ears_v1_digitigrade_partial_original.png",
+                "test_images/ears_v1_digitigrade_partial_displaced.png",
+                LegMode::DigitigradePartial,
+            ),
+            (
+                "test_images/ears_v1_digitigrade_full_original.png",
+                "test_images/ears_v1_digitigrade_full_displaced.png",
+                LegMode::DigitigradeFull,
+            ),
+        ] {
+            assert_ears_displacement(original, displaced, leg_mode);
+        }
+    }
+
+    #[test]
+    fn preprocessing_matches_ears_emissive_digitigrade_displacement_fixtures() {
+        for (original, displaced, emissive_displaced, leg_mode) in [
+            (
+                "test_images/ears_v0_digitigrade_partial_emissive_original.png",
+                "test_images/ears_v0_digitigrade_partial_emissive_displaced.png",
+                "test_images/ears_v0_digitigrade_partial_emissive_emissive_displaced.png",
+                LegMode::DigitigradePartial,
+            ),
+            (
+                "test_images/ears_v0_digitigrade_full_emissive_original.png",
+                "test_images/ears_v0_digitigrade_full_emissive_displaced.png",
+                "test_images/ears_v0_digitigrade_full_emissive_emissive_displaced.png",
+                LegMode::DigitigradeFull,
+            ),
+            (
+                "test_images/ears_v1_digitigrade_partial_emissive_original.png",
+                "test_images/ears_v1_digitigrade_partial_emissive_displaced.png",
+                "test_images/ears_v1_digitigrade_partial_emissive_emissive_displaced.png",
+                LegMode::DigitigradePartial,
+            ),
+            (
+                "test_images/ears_v1_digitigrade_full_emissive_original.png",
+                "test_images/ears_v1_digitigrade_full_emissive_displaced.png",
+                "test_images/ears_v1_digitigrade_full_emissive_emissive_displaced.png",
+                LegMode::DigitigradeFull,
+            ),
+        ] {
+            let mut original_image = image::open(original).unwrap().to_rgba8();
+            let palette = extract_emissive_palette(&original_image).unwrap().unwrap();
+            let result = preprocess_skin(&mut original_image).unwrap();
+            let mut displaced_image = result.displaced_skin.unwrap();
+
+            assert_eq!(result.features.unwrap().leg_mode, leg_mode);
+            assert_image_eq(
+                &displaced_image,
+                &image::open(displaced).unwrap().to_rgba8(),
+                displaced,
+            );
+            let actual_emissive = apply_emissive_palette(&mut displaced_image, &palette).unwrap();
+            assert_image_eq(
+                &actual_emissive,
+                &image::open(emissive_displaced).unwrap().to_rgba8(),
+                emissive_displaced,
+            );
+        }
     }
 
     #[test]
@@ -187,6 +278,47 @@ mod tests {
 
         assert_eq!(image.get_pixel(4, 20).0[3], 0);
         assert_eq!(image.get_pixel(20, 16).0[3], 255);
+    }
+
+    fn assert_ears_displacement(original: &str, displaced: &str, leg_mode: LegMode) {
+        let before = image::open(original).unwrap().to_rgba8();
+        let mut actual = before.clone();
+        let result = preprocess_skin(&mut actual).unwrap();
+        let expected = image::open(displaced).unwrap().to_rgba8();
+
+        assert_eq!(result.features.unwrap().leg_mode, leg_mode);
+        assert_image_eq(
+            result.displaced_skin.as_ref().unwrap(),
+            &expected,
+            displaced,
+        );
+        for ((x, y, before_pixel), (_, _, actual_pixel)) in
+            before.enumerate_pixels().zip(actual.enumerate_pixels())
+        {
+            if expected.get_pixel(x, y).0[3] > 0 {
+                assert_eq!(
+                    *actual_pixel,
+                    Rgba([0, 0, 0, 0]),
+                    "{original} retained displaced pixel at ({x}, {y})"
+                );
+            } else {
+                assert_eq!(
+                    *actual_pixel, *before_pixel,
+                    "{original} changed non-displaced pixel at ({x}, {y})"
+                );
+            }
+        }
+    }
+
+    fn assert_image_eq(actual: &RgbaImage, expected: &RgbaImage, expected_path: &str) {
+        for ((x, y, actual_pixel), (_, _, expected_pixel)) in
+            actual.enumerate_pixels().zip(expected.enumerate_pixels())
+        {
+            assert_eq!(
+                actual_pixel, expected_pixel,
+                "did not match {expected_path} at ({x}, {y})"
+            );
+        }
     }
 
     fn digitigrade_skin(leg_mode: LegMode) -> RgbaImage {
