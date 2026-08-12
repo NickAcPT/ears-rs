@@ -5,22 +5,27 @@ use crate::utils::errors::Result;
 
 pub fn process_erase_regions(image: &mut RgbaImage) -> Result<()> {
     let alfalfa = crate::alfalfa::read_alfalfa(image)?;
+    if let Some(alfalfa) = alfalfa.as_ref() {
+        apply_erase_regions(image, alfalfa)?;
+    }
+    Ok(())
+}
 
-    if let Some(alfalfa) = alfalfa {
-        let regions = alfalfa.get_erase_regions()?;
-        if let Some(regions) = regions {
-            for region in regions {
-                for x in region.x..region.x + region.width {
-                    for y in region.y..region.y + region.height {
-                        if let Some(pixel) = image.get_pixel_mut_checked(x as u32, y as u32) {
-                            *pixel = image::Rgba([0, 0, 0, 0]);
-                        }
+pub(crate) fn apply_erase_regions(
+    image: &mut RgbaImage,
+    alfalfa: &crate::alfalfa::AlfalfaData,
+) -> Result<()> {
+    if let Some(regions) = alfalfa.get_erase_regions()? {
+        for region in regions {
+            for x in region.x..region.x + region.width {
+                for y in region.y..region.y + region.height {
+                    if let Some(pixel) = image.get_pixel_mut_checked(x as u32, y as u32) {
+                        *pixel = image::Rgba([0, 0, 0, 0]);
                     }
                 }
             }
         }
     }
-
     Ok(())
 }
 

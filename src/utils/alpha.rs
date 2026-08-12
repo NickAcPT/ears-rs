@@ -1,41 +1,116 @@
-macro_rules! define_strip_alpha_func {
-    ($([($x1: expr, $y1: expr), ($x2: expr, $y2: expr)]),+) => {
-        use image::RgbaImage;
+use image::RgbaImage;
 
-        #[allow(dead_code)]
-        pub fn strip_alpha(image: &mut RgbaImage) {
-            let x_scale = image.width() as f32 / 64.0;
-            let y_scale = image.height() as f32 / 64.0;
-            $(
-            {
-                let x1 = ($x1 as f32 * x_scale) as u32;
-                let y1 = ($y1 as f32 * y_scale) as u32;
-                let x2 = ($x2 as f32 * x_scale) as u32;
-                let y2 = ($y2 as f32 * y_scale) as u32;
-                for y in y1..y2 {
-                    for x in x1..x2 {
-                        if let Some(pixel) = image.get_pixel_mut_checked(x, y) {
-                            pixel.0[3] = u8::MAX;
-                        }
-                    }
-                }
-            }
-            )+
-        }
-    };
+use crate::features::{EarsFeatures, data::leg::LegMode};
+
+#[derive(Clone, Copy)]
+pub(crate) struct Rectangle {
+    pub x1: u32,
+    pub y1: u32,
+    pub x2: u32,
+    pub y2: u32,
+    pub force_opaque: bool,
 }
 
-define_strip_alpha_func!(
-    [(8, 0), (24, 8)],
-    [(0, 8), (32, 16)],
-    [(4, 16), (12, 20)],
-    [(20, 16), (36, 20)],
-    [(44, 16), (52, 20)],
-    [(0, 20), (56, 32)],
-    [(20, 48), (28, 52)],
-    [(36, 48), (44, 52)],
-    [(16, 52), (48, 64)]
-);
+const fn rectangle(x: u32, y: u32, width: u32, height: u32, force_opaque: bool) -> Rectangle {
+    Rectangle {
+        x1: x,
+        y1: y,
+        x2: x + width,
+        y2: y + height,
+        force_opaque,
+    }
+}
+
+pub(crate) const FORCED_OPAQUE_REGIONS: &[Rectangle] = &[
+    rectangle(8, 0, 16, 8, false),
+    rectangle(0, 8, 32, 8, false),
+    rectangle(4, 16, 8, 4, false),
+    rectangle(20, 16, 16, 4, false),
+    rectangle(44, 16, 8, 4, false),
+    rectangle(0, 20, 56, 12, false),
+    rectangle(20, 48, 8, 4, false),
+    rectangle(36, 48, 8, 4, false),
+    rectangle(16, 52, 32, 12, false),
+];
+
+pub(crate) const LEG_BOTTOM_HALF_REGIONS: &[Rectangle] = &[
+    rectangle(24, 48, 4, 4, true),
+    rectangle(16, 58, 16, 6, true),
+    rectangle(8, 16, 4, 4, true),
+    rectangle(0, 26, 16, 6, true),
+    rectangle(8, 32, 4, 4, false),
+    rectangle(0, 42, 16, 6, false),
+    rectangle(8, 48, 4, 4, false),
+    rectangle(0, 58, 16, 6, false),
+];
+
+pub(crate) const LEG_REGIONS: &[Rectangle] = &[
+    rectangle(20, 48, 8, 4, true),
+    rectangle(16, 52, 16, 12, true),
+    rectangle(4, 16, 8, 4, true),
+    rectangle(0, 20, 16, 12, true),
+    rectangle(4, 32, 8, 4, false),
+    rectangle(0, 36, 16, 12, false),
+    rectangle(4, 48, 8, 4, false),
+    rectangle(0, 52, 16, 12, false),
+];
+
+const FORCED_OPAQUE_REGIONS_WITHOUT_LEG_BOTTOM_REGIONS: &[Rectangle] = &[
+    rectangle(8, 0, 16, 8, false),
+    rectangle(0, 8, 32, 8, false),
+    rectangle(4, 16, 4, 4, false),
+    rectangle(20, 16, 16, 4, false),
+    rectangle(44, 16, 8, 4, false),
+    rectangle(0, 20, 16, 18, false),
+    rectangle(16, 20, 40, 12, false),
+    rectangle(20, 48, 4, 4, false),
+    rectangle(36, 48, 8, 4, false),
+    rectangle(16, 52, 16, 6, false),
+    rectangle(32, 52, 16, 12, false),
+];
+
+const FORCED_OPAQUE_REGIONS_WITHOUT_LEG_REGIONS: &[Rectangle] = &[
+    rectangle(8, 0, 16, 8, false),
+    rectangle(0, 8, 32, 8, false),
+    rectangle(4, 16, 4, 4, false),
+    rectangle(20, 16, 16, 4, false),
+    rectangle(44, 16, 8, 4, false),
+    rectangle(16, 20, 40, 12, false),
+    rectangle(20, 48, 4, 4, false),
+    rectangle(36, 48, 8, 4, false),
+    rectangle(32, 52, 16, 12, false),
+];
+
+pub fn strip_alpha(image: &mut RgbaImage) {
+    strip_alpha_for_features(image, None);
+}
+
+pub fn strip_alpha_for_features(image: &mut RgbaImage, features: Option<&EarsFeatures>) {
+    let regions = match features.map(|features| features.leg_mode) {
+        Some(LegMode::DigitigradePartial) => FORCED_OPAQUE_REGIONS_WITHOUT_LEG_BOTTOM_REGIONS,
+        Some(LegMode::DigitigradeFull) => FORCED_OPAQUE_REGIONS_WITHOUT_LEG_REGIONS,
+        _ => FORCED_OPAQUE_REGIONS,
+    };
+    strip_alpha_regions(image, regions);
+}
+
+fn strip_alpha_regions(image: &mut RgbaImage, regions: &[Rectangle]) {
+    let x_scale = image.width() as f32 / 64.0;
+    let y_scale = image.height() as f32 / 64.0;
+    for region in regions {
+        let x1 = (region.x1 as f32 * x_scale) as u32;
+        let y1 = (region.y1 as f32 * y_scale) as u32;
+        let x2 = (region.x2 as f32 * x_scale) as u32;
+        let y2 = (region.y2 as f32 * y_scale) as u32;
+        for y in y1..y2 {
+            for x in x1..x2 {
+                if let Some(pixel) = image.get_pixel_mut_checked(x, y) {
+                    pixel.0[3] = u8::MAX;
+                }
+            }
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {

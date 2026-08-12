@@ -78,13 +78,15 @@ const MAGIC: u32 = 0xEA1FA1FA; // EALFALFA
 const PREDEF_KEYS: [&str; 4] = ["END", "wing", "erase", "cape"];
 
 pub fn read_alfalfa(image: &RgbaImage) -> Result<Option<AlfalfaData>> {
-    let data = decode_alfalfa(image)?;
-
-    if data.is_none() {
+    let Some(data) = decode_alfalfa(image)? else {
+        return Ok(None);
+    };
+    // Opaque feature pixels can overlap Alfalfa's encoding regions. They are not an Alfalfa
+    // payload unless they contain the complete magic value.
+    if data.len() < std::mem::size_of::<u32>() {
         return Ok(None);
     }
-
-    let mut data = Cursor::new(data.unwrap());
+    let mut data = Cursor::new(data);
 
     let magic = data
         .read_u32::<BigEndian>()
