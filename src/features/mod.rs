@@ -4,6 +4,14 @@ use data::{
     leg::LegMode, protrusions::Protrusions, snout::SnoutData, tail::TailData, wing::WingData,
 };
 
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DataVersion {
+    #[default]
+    V0,
+    V1(u8),
+    Custom(u32),
+}
+
 #[derive(Default, Debug, Clone, Copy, PartialEq)]
 pub struct EarsFeatures {
     pub ear_mode: EarMode,
@@ -19,5 +27,5 @@ pub struct EarsFeatures {
     pub cape_enabled: bool,
     pub emissive: bool,
 
-    pub data_version: u8,
+    pub data_version: DataVersion,
 }

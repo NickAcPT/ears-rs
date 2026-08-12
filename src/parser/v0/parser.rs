@@ -1,6 +1,5 @@
 use crate::{
     features::{
-        EarsFeatures,
         data::{
             ear::{EarAnchor, EarMode},
             leg::LegMode,
@@ -9,10 +8,11 @@ use crate::{
             tail::{TailData, TailMode},
             wing::{WingAnimationMode, WingData, WingMode},
         },
+        DataVersion, EarsFeatures,
     },
-    parser::EarsFeaturesParser,
     parser::v0::macros::read_magic_pixel,
     parser::v0::magic_pixels::MagicPixelsV0,
+    parser::EarsFeaturesParser,
     utils::errors::{EarsError, Result},
 };
 use image::RgbaImage;
@@ -20,10 +20,6 @@ use image::RgbaImage;
 pub(crate) struct EarsParserV0;
 
 impl EarsFeaturesParser for EarsParserV0 {
-    fn get_data_version() -> u8 {
-        0
-    }
-
     fn detect_magic_pixel() -> u32 {
         MagicPixelsV0::Blue.get_hex()
     }
@@ -91,7 +87,7 @@ impl EarsFeaturesParser for EarsParserV0 {
 
         features.emissive = read_magic_pixel!(image, 10)? == MagicPixelsV0::Orange.get_hex();
 
-        features.data_version = Self::get_data_version();
+        features.data_version = DataVersion::V0;
 
         Ok(Some(features))
     }
@@ -293,7 +289,7 @@ mod tests {
                 chest_size: 0.40625,
                 cape_enabled: false,
                 emissive: false,
-                data_version: 0,
+                data_version: DataVersion::V0,
             }
         );
     }

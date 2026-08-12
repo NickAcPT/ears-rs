@@ -13,8 +13,6 @@ pub trait EarsFeaturesWriter {
 }
 
 pub(crate) trait EarsFeaturesParser {
-    fn get_data_version() -> u8;
-
     fn detect_magic_pixel() -> u32;
 
     fn detect(image: &RgbaImage) -> bool {

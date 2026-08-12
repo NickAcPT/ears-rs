@@ -1,5 +1,4 @@
 use crate::features::{
-    EarsFeatures,
     data::{
         ear::{EarAnchor, EarMode},
         leg::LegMode,
@@ -8,23 +7,46 @@ use crate::features::{
         tail::{TailData, TailMode},
         wing::{WingAnimationMode, WingData, WingMode},
     },
+    DataVersion, EarsFeatures,
 };
-use crate::parser::EarsFeaturesParser;
 use crate::parser::utils::to_argb_hex;
+use crate::parser::EarsFeaturesParser;
 use crate::utils::bit_reader::BitReader;
 use crate::utils::errors::{EarsError, Result};
+use enum_ordinalize::Ordinalize;
 use image::RgbaImage;
 use std::io::Cursor;
 
 const V1_PARSER_MAGIC: u32 = 0xFFEA2501;
 
 pub(crate) struct EarsParserV1;
+impl EarsParserV1 {
+    pub fn get_required_version_for_features(features: &EarsFeatures) -> u8 {
+        let tail_requires_v1 = features
+            .tail
+            .is_some_and(|tail| tail.mode.ordinal() >= TailMode::Star.ordinal());
+        let requires_v2 = features.leg_mode != LegMode::Plantigrade
+            || features.wing.is_some_and(|wing| {
+                wing.mode != WingMode::None && wing.animation_mode != WingAnimationMode::Normal
+            })
+            || features.tail.is_some_and(|tail| {
+                tail.mode != TailMode::None && (!tail.animate || tail.swap_jacket_back)
+            });
+        let requires_v3 = features.protrusions.ordinal() > 0b11;
+
+        if requires_v3 {
+            3
+        } else if requires_v2 {
+            2
+        } else if tail_requires_v1 {
+            1
+        } else {
+            0
+        }
+    }
+}
 
 impl EarsFeaturesParser for EarsParserV1 {
-    fn get_data_version() -> u8 {
-        1
-    }
-
     fn detect_magic_pixel() -> u32 {
         V1_PARSER_MAGIC
     }
@@ -60,12 +82,11 @@ impl EarsFeaturesParser for EarsParserV1 {
         let data_len = data.len();
         let mut reader = BitReader::new(Cursor::new(data), data_len);
 
-        // currently, version means nothing. in the future it will indicate additional
-        // data that has been added to the end of the format (earlier data mustn't change
-        // format!)
+        // version indicates additional data that has been added to the end of the format
+        // (earlier data mustn't change format!)
 
         // budget: ((4*4)-1)*3 bytes (360 bits)
-        let _version = reader.read(8)?;
+        let version = reader.read(8)? as u8;
 
         let ears = reader.read(6)?;
         // 6 bits has a range of 0-63
@@ -132,7 +153,7 @@ impl EarsFeaturesParser for EarsParserV1 {
 
         let emissive = reader.read_bool()?;
 
-        let tail_mode = if _version >= 1 && tail_i == 7 {
+        let tail_mode = if version >= 1 && tail_i == 7 {
             let tail_i_ext = reader.read(3)?;
             by_ordinal_or!(TailMode, tail_i + tail_i_ext, TailMode::None)
         } else {
@@ -147,7 +168,7 @@ impl EarsFeaturesParser for EarsParserV1 {
         };
         let mut animate_tail = true;
         let mut swap_jacket_back = false;
-        if _version >= 2 {
+        if version >= 2 {
             leg_mode = by_ordinal_or!(LegMode, reader.read(3)?, LegMode::Plantigrade);
             if wing_mode != WingMode::None {
                 wing_animation_mode =
@@ -160,7 +181,7 @@ impl EarsFeaturesParser for EarsParserV1 {
         let protrusions = by_ordinal_or!(
             Protrusions,
             protrusions_i
-                + if _version >= 3 {
+                + if version >= 3 {
                     reader.read(2)? << 2
                 } else {
                     0
@@ -205,7 +226,7 @@ impl EarsFeaturesParser for EarsParserV1 {
             chest_size,
             cape_enabled,
             emissive,
-            data_version: Self::get_data_version(),
+            data_version: DataVersion::V1(version),
         };
 
         Ok(Some(features))
@@ -273,5 +294,37 @@ mod tests {
 
         assert!(features.cape_enabled);
         assert!(!features.emissive);
+    }
+    #[test]
+    fn required_version_tracks_serialized_features() {
+        assert_eq!(
+            EarsParserV1::get_required_version_for_features(&EarsFeatures::default()),
+            0
+        );
+
+        let mut features = EarsFeatures {
+            tail: Some(TailData {
+                mode: TailMode::Star,
+                segments: 1,
+                ..Default::default()
+            }),
+            ..Default::default()
+        };
+        assert_eq!(
+            EarsParserV1::get_required_version_for_features(&features),
+            1
+        );
+
+        features.leg_mode = LegMode::DigitigradePartial;
+        assert_eq!(
+            EarsParserV1::get_required_version_for_features(&features),
+            2
+        );
+
+        features.protrusions = Protrusions::Halo;
+        assert_eq!(
+            EarsParserV1::get_required_version_for_features(&features),
+            3
+        );
     }
 }

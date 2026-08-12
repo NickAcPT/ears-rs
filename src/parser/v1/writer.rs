@@ -2,14 +2,14 @@ use std::io::{Cursor, Write};
 
 use crate::{
     features::{
-        EarsFeatures,
         data::{
             ear::EarMode,
             tail::TailMode,
             wing::{WingAnimationMode, WingMode},
         },
+        EarsFeatures,
     },
-    parser::{EarsFeaturesWriter, utils::from_argb_hex},
+    parser::{utils::from_argb_hex, v1::parser::EarsParserV1, EarsFeaturesWriter},
     utils::{bit_writer::BitWriter, errors::Result},
 };
 use enum_ordinalize::Ordinalize;
@@ -18,7 +18,8 @@ pub struct EarsWriterV1;
 
 impl EarsWriterV1 {
     fn write_features<W: Write>(feat: &EarsFeatures, writer: &mut BitWriter<W>) -> Result<()> {
-        writer.write_long(8, 3)?; // version
+        let version = EarsParserV1::get_required_version_for_features(feat);
+        writer.write_long(8, version.into())?;
 
         let ears = if feat.ear_mode == EarMode::None {
             0u64
@@ -89,22 +90,27 @@ impl EarsWriterV1 {
         writer.write_bool(feat.cape_enabled)?;
         writer.write_bool(feat.emissive)?;
 
-        if tail_mode.ordinal() > 6 {
+        if version >= 1 && tail_mode.ordinal() > 6 {
             writer.write_long(3, (tail_mode.ordinal() - 7) as u64)?;
         }
 
-        writer.write_long(3, feat.leg_mode.ordinal() as u64)?;
-        if wing_mode != WingMode::None {
-            writer.write_long(
-                3,
-                feat.wing
-                    .map(|wing| wing.animation_mode.ordinal() as u64)
-                    .unwrap_or(WingAnimationMode::Normal.ordinal() as u64),
-            )?;
+        if version >= 2 {
+            writer.write_long(3, feat.leg_mode.ordinal() as u64)?;
+            if wing_mode != WingMode::None {
+                writer.write_long(
+                    3,
+                    feat.wing
+                        .map(|wing| wing.animation_mode.ordinal() as u64)
+                        .unwrap_or(WingAnimationMode::Normal.ordinal() as u64),
+                )?;
+            }
+            writer.write_bool(feat.tail.is_none_or(|tail| tail.animate))?;
+            writer.write_bool(feat.tail.is_some_and(|tail| tail.swap_jacket_back))?;
         }
-        writer.write_bool(feat.tail.is_none_or(|tail| tail.animate))?;
-        writer.write_bool(feat.tail.is_some_and(|tail| tail.swap_jacket_back))?;
-        writer.write_long(2, feat.protrusions.ordinal() as u64 >> 2)?;
+
+        if version >= 3 {
+            writer.write_long(2, feat.protrusions.ordinal() as u64 >> 2)?;
+        }
 
         writer.align()?;
 
@@ -153,11 +159,14 @@ mod tests {
 
     use super::*;
     use crate::{
-        features::data::{
-            ear::EarAnchor, leg::LegMode, protrusions::Protrusions, snout::SnoutData,
-            tail::TailData, wing::WingData,
+        features::{
+            data::{
+                ear::EarAnchor, leg::LegMode, protrusions::Protrusions, snout::SnoutData,
+                tail::TailData, wing::WingData,
+            },
+            DataVersion,
         },
-        parser::{EarsFeaturesParser, v1::parser::EarsParserV1},
+        parser::{v1::parser::EarsParserV1, EarsFeaturesParser},
     };
 
     #[test]
@@ -184,7 +193,7 @@ mod tests {
             chest_size: 0.0,
             cape_enabled: true,
             emissive: false,
-            data_version: 1,
+            data_version: DataVersion::V1(0),
         };
 
         let mut image = RgbaImage::new(64, 64);
@@ -193,6 +202,39 @@ mod tests {
         let result = EarsParserV1::parse(&image)?;
 
         assert_eq!(result, Some(features));
+
+        Ok(())
+    }
+
+    #[test]
+    fn v1_version_zero_roundtrip_preserves_image() -> Result<()> {
+        let features = EarsFeatures {
+            ear_mode: EarMode::Around,
+            ear_anchor: EarAnchor::Center,
+            tail: Some(TailData {
+                mode: TailMode::Down,
+                segments: 2,
+                bends: [-10.0, -14.285715, 0.0, 0.0],
+                ..Default::default()
+            }),
+            snout: Some(SnoutData {
+                offset: 1,
+                width: 4,
+                height: 2,
+                depth: 2,
+            }),
+            cape_enabled: true,
+            ..Default::default()
+        };
+        let mut source = RgbaImage::new(64, 64);
+        EarsWriterV1::write(&mut source, &features)?;
+
+        let parsed = EarsParserV1::parse(&source)?.expect("v1 data should parse");
+        assert_eq!(parsed.data_version, DataVersion::V1(0));
+
+        let mut roundtripped = source.clone();
+        EarsWriterV1::write(&mut roundtripped, &parsed)?;
+        assert_eq!(roundtripped, source);
 
         Ok(())
     }
@@ -224,7 +266,7 @@ mod tests {
             chest_size: 0.0,
             cape_enabled: true,
             emissive: false,
-            data_version: 1,
+            data_version: DataVersion::V1(1),
         };
 
         let mut image = RgbaImage::new(64, 64);
@@ -253,7 +295,7 @@ mod tests {
             }),
             protrusions: Protrusions::ClawsAndDoubleHalo,
             leg_mode: LegMode::DigitigradeFull,
-            data_version: 1,
+            data_version: DataVersion::V1(3),
             ..Default::default()
         };
 
