@@ -1,10 +1,16 @@
-use crate::features::data::ear::{EarAnchor, EarMode};
-use crate::features::data::snout::SnoutData;
-use crate::features::data::tail::{TailData, TailMode};
-use crate::features::data::wing::{WingData, WingMode};
-use crate::features::EarsFeatures;
-use crate::parser::utils::to_argb_hex;
+use crate::features::{
+    EarsFeatures,
+    data::{
+        ear::{EarAnchor, EarMode},
+        leg::LegMode,
+        protrusions::Protrusions,
+        snout::SnoutData,
+        tail::{TailData, TailMode},
+        wing::{WingAnimationMode, WingData, WingMode},
+    },
+};
 use crate::parser::EarsFeaturesParser;
+use crate::parser::utils::to_argb_hex;
 use crate::utils::bit_reader::BitReader;
 use crate::utils::errors::{EarsError, Result};
 use image::RgbaImage;
@@ -75,19 +81,17 @@ impl EarsFeaturesParser for EarsParserV1 {
             )
         };
 
-        let claws = reader.read_bool()?;
-        let horn = reader.read_bool()?;
+        let protrusions_i = reader.read(2)?;
 
+        // 3 bits has a range of 0-7 - 7 means "read elsewhere"
         let tail_i = reader.read(3)?;
-        // 3 bits has a range of 0-7 - if we run out, a value of 7 can mean "read elsewhere"
 
-        let tail_mode = by_ordinal_or!(TailMode, tail_i, TailMode::None);
         let mut tail_segments = 0;
         let mut tail_bend_0 = 0.0f32;
         let mut tail_bend_1 = 0.0f32;
         let mut tail_bend_2 = 0.0f32;
         let mut tail_bend_3 = 0.0f32;
-        if tail_mode != TailMode::None {
+        if tail_i != 0 {
             tail_segments = reader.read(2)? + 1;
             tail_bend_0 = reader.read_sam_unit(6)? * 90.0f32;
             tail_bend_1 = if tail_segments > 1 {
@@ -121,13 +125,48 @@ impl EarsFeaturesParser for EarsParserV1 {
         let chest_size = reader.read_unit(5)?;
 
         let wing_i = reader.read(3)?;
-        // 3 bits has a range of 0-7
         let wing_mode = by_ordinal_or!(WingMode, wing_i, WingMode::None);
         let animate_wings = wing_mode != WingMode::None && reader.read_bool()?;
 
         let cape_enabled = reader.read_bool()?;
 
         let emissive = reader.read_bool()?;
+
+        let tail_mode = if _version >= 1 && tail_i == 7 {
+            let tail_i_ext = reader.read(3)?;
+            by_ordinal_or!(TailMode, tail_i + tail_i_ext, TailMode::None)
+        } else {
+            by_ordinal_or!(TailMode, tail_i, TailMode::None)
+        };
+
+        let mut leg_mode = LegMode::Plantigrade;
+        let mut wing_animation_mode = if animate_wings {
+            WingAnimationMode::Normal
+        } else {
+            WingAnimationMode::None
+        };
+        let mut animate_tail = true;
+        let mut swap_jacket_back = false;
+        if _version >= 2 {
+            leg_mode = by_ordinal_or!(LegMode, reader.read(3)?, LegMode::Plantigrade);
+            if wing_mode != WingMode::None {
+                wing_animation_mode =
+                    by_ordinal_or!(WingAnimationMode, reader.read(3)?, wing_animation_mode);
+            }
+            animate_tail = reader.read_bool()?;
+            swap_jacket_back = reader.read_bool()?;
+        }
+
+        let protrusions = by_ordinal_or!(
+            Protrusions,
+            protrusions_i
+                + if _version >= 3 {
+                    reader.read(2)? << 2
+                } else {
+                    0
+                },
+            Protrusions::None
+        );
 
         let features = EarsFeatures {
             ear_mode,
@@ -137,6 +176,8 @@ impl EarsFeaturesParser for EarsParserV1 {
                     mode: tail_mode,
                     segments: tail_segments as u8,
                     bends: [tail_bend_0, tail_bend_1, tail_bend_2, tail_bend_3],
+                    animate: animate_tail,
+                    swap_jacket_back,
                 })
             } else {
                 None
@@ -154,13 +195,13 @@ impl EarsFeaturesParser for EarsParserV1 {
             wing: if wing_mode != WingMode::None {
                 Some(WingData {
                     mode: wing_mode,
-                    animated: animate_wings,
+                    animation_mode: wing_animation_mode,
                 })
             } else {
                 None
             },
-            claws,
-            horn,
+            protrusions,
+            leg_mode,
             chest_size,
             cape_enabled,
             emissive,
@@ -204,15 +245,16 @@ mod tests {
         assert_eq!(features.ear_mode, EarMode::Around);
         assert_eq!(features.ear_anchor, EarAnchor::Center);
 
-        assert!(features.claws);
-        assert!(!features.horn);
+        assert_eq!(features.protrusions, Protrusions::Claws);
 
         assert_eq!(
             features.tail,
             Some(TailData {
                 mode: TailMode::Down,
                 segments: 2,
-                bends: [-10.0, -14.285715, 0.0, 0.0]
+                bends: [-10.0, -14.285715, 0.0, 0.0],
+                animate: true,
+                swap_jacket_back: false,
             })
         );
 

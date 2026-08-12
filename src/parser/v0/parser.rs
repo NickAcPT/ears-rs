@@ -1,12 +1,18 @@
 use crate::{
-    features::data::ear::{EarAnchor, EarMode},
-    features::data::snout::SnoutData,
-    features::data::tail::{TailData, TailMode},
-    features::data::wing::{WingData, WingMode},
-    features::EarsFeatures,
+    features::{
+        EarsFeatures,
+        data::{
+            ear::{EarAnchor, EarMode},
+            leg::LegMode,
+            protrusions::Protrusions,
+            snout::SnoutData,
+            tail::{TailData, TailMode},
+            wing::{WingAnimationMode, WingData, WingMode},
+        },
+    },
+    parser::EarsFeaturesParser,
     parser::v0::macros::read_magic_pixel,
     parser::v0::magic_pixels::MagicPixelsV0,
-    parser::EarsFeaturesParser,
     utils::errors::{EarsError, Result},
 };
 use image::RgbaImage;
@@ -48,15 +54,16 @@ impl EarsFeaturesParser for EarsParserV0 {
             MagicPixelsV0::Red => EarAnchor::Back
         )?.unwrap_or_default();
 
-        let (claws, horn) = read_magic_pixel!(
-            image, 3, (false, false),
-            MagicPixelsV0::Green => (true, false),
-            MagicPixelsV0::Purple => (false, true),
-            MagicPixelsV0::Cyan => (true, true)
+        features.protrusions = read_magic_pixel!(
+            image, 3, Protrusions::None,
+            MagicPixelsV0::Green => Protrusions::Claws,
+            MagicPixelsV0::Purple => Protrusions::Horn,
+            MagicPixelsV0::Cyan => Protrusions::ClawsAndHorn,
+            MagicPixelsV0::White => Protrusions::Halo,
+            MagicPixelsV0::Gray => Protrusions::DoubleHalo,
+            MagicPixelsV0::Purple2 => Protrusions::ClawsAndHalo,
+            MagicPixelsV0::Pink => Protrusions::ClawsAndDoubleHalo
         )?;
-
-        features.claws = claws;
-        features.horn = horn;
 
         features.tail = read_tail_data(image)?;
         features.snout = read_snout_data(image)?;
@@ -67,6 +74,20 @@ impl EarsFeaturesParser for EarsParserV0 {
         features.cape_enabled = (etc & 16) != 0;
 
         features.wing = read_wing_data(image)?;
+
+        features.leg_mode = read_magic_pixel!(
+            image, 11, LegMode::Plantigrade,
+            MagicPixelsV0::Green => LegMode::DigitigradePartial,
+            MagicPixelsV0::Pink => LegMode::DigitigradeFull
+        )?;
+
+        let bitflags = read_magic_pixel!(image, 12)? & 0x00FF_FFFF;
+        if bitflags != MagicPixelsV0::Blue.get_hex() & 0x00FF_FFFF {
+            if let Some(tail) = features.tail.as_mut() {
+                tail.animate = bitflags & 1 != 0;
+                tail.swap_jacket_back = bitflags & 2 != 0;
+            }
+        }
 
         features.emissive = read_magic_pixel!(image, 10)? == MagicPixelsV0::Orange.get_hex();
 
@@ -96,9 +117,16 @@ fn read_wing_data(image: &RgbaImage) -> Result<Option<WingData>> {
         return Ok(None);
     }
 
-    let animated = read_magic_pixel!(image, 9)? != MagicPixelsV0::Red.get_hex();
+    let animation_mode = read_magic_pixel!(
+        image, 9, WingAnimationMode::Normal,
+        MagicPixelsV0::Red => WingAnimationMode::None,
+        MagicPixelsV0::Green => WingAnimationMode::NoFlight
+    )?;
 
-    Ok(Some(WingData { mode, animated }))
+    Ok(Some(WingData {
+        mode,
+        animation_mode,
+    }))
 }
 
 fn read_snout_data(image: &RgbaImage) -> Result<Option<SnoutData>> {
@@ -249,21 +277,23 @@ mod tests {
                 tail: Some(TailData {
                     mode: TailMode::Vertical,
                     segments: 1,
-                    bends: [14.765625, 0.0, 0.0, 0.0]
+                    bends: [14.765625, 0.0, 0.0, 0.0],
+                    animate: true,
+                    swap_jacket_back: false,
                 }),
                 snout: Some(SnoutData {
                     offset: 0,
                     width: 4,
                     height: 2,
-                    depth: 2
+                    depth: 2,
                 }),
                 wing: None,
-                claws: false,
-                horn: false,
+                protrusions: Protrusions::None,
+                leg_mode: LegMode::Plantigrade,
                 chest_size: 0.40625,
                 cape_enabled: false,
                 emissive: false,
-                data_version: 0
+                data_version: 0,
             }
         );
     }
@@ -314,8 +344,7 @@ mod tests {
 
         assert_eq!(features.ear_mode, EarMode::Out);
         assert_eq!(features.ear_anchor, EarAnchor::Front);
-        assert!(features.claws);
-        assert!(features.horn);
+        assert_eq!(features.protrusions, Protrusions::ClawsAndHorn);
 
         let tail = features.tail.unwrap();
         assert_eq!(tail.segments, 3);
@@ -331,7 +360,7 @@ mod tests {
             features.wing,
             Some(WingData {
                 mode: WingMode::SymmetricDual,
-                animated: true,
+                animation_mode: WingAnimationMode::Normal,
             })
         )
     }

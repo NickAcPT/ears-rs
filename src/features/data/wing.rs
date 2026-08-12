@@ -3,7 +3,15 @@ use enum_ordinalize::Ordinalize;
 #[derive(Default, Debug, PartialEq, Eq, Clone, Copy)]
 pub struct WingData {
     pub mode: WingMode,
-    pub animated: bool,
+    pub animation_mode: WingAnimationMode,
+}
+
+#[derive(Ordinalize, Debug, PartialEq, Eq, Clone, Copy, Hash, Default)]
+pub enum WingAnimationMode {
+    #[default]
+    Normal,
+    None,
+    NoFlight,
 }
 
 #[derive(Ordinalize, Debug, PartialEq, Eq, Clone, Copy, Hash, Default)]

@@ -2,20 +2,22 @@ use image::RgbaImage;
 
 use crate::{
     features::{
+        EarsFeatures,
         data::{
             ear::{EarAnchor, EarMode},
+            leg::LegMode,
+            protrusions::Protrusions,
             snout::SnoutData,
             tail::{TailData, TailMode},
-            wing::{WingData, WingMode},
+            wing::{WingAnimationMode, WingData, WingMode},
         },
-        EarsFeatures,
     },
     parser::{
+        EarsFeaturesWriter,
         v0::{
             macros::{write_magic_pixel, write_raw_magic_pixel},
             magic_pixels::MagicPixelsV0,
         },
-        EarsFeaturesWriter,
     },
     utils::errors::Result,
 };
@@ -28,7 +30,7 @@ impl EarsFeaturesWriter for EarsWriterV0 {
         for idx in 0..(4 * 4) {
             write_raw_magic_pixel(image, idx, MagicPixelsV0::Unknown.get_hex())?;
         }
-        
+
         // Ears V0 detection pixel
         write_raw_magic_pixel(image, 0, MagicPixelsV0::Blue.get_hex())?;
 
@@ -65,11 +67,15 @@ impl EarsFeaturesWriter for EarsWriterV0 {
         write_magic_pixel(
             image,
             3,
-            (features.claws, features.horn),
+            features.protrusions,
             [
-                ((true, false), MagicPixelsV0::Green),
-                ((false, true), MagicPixelsV0::Purple),
-                ((true, true), MagicPixelsV0::Cyan),
+                (Protrusions::Claws, MagicPixelsV0::Green),
+                (Protrusions::Horn, MagicPixelsV0::Purple),
+                (Protrusions::ClawsAndHorn, MagicPixelsV0::Cyan),
+                (Protrusions::Halo, MagicPixelsV0::White),
+                (Protrusions::DoubleHalo, MagicPixelsV0::Gray),
+                (Protrusions::ClawsAndHalo, MagicPixelsV0::Purple2),
+                (Protrusions::ClawsAndDoubleHalo, MagicPixelsV0::Pink),
             ],
         )?;
 
@@ -92,6 +98,22 @@ impl EarsFeaturesWriter for EarsWriterV0 {
         if let Some(wing_data) = features.wing {
             write_wing_data(image, &wing_data)?;
         }
+
+        write_magic_pixel(
+            image,
+            11,
+            features.leg_mode,
+            [
+                (LegMode::Plantigrade, MagicPixelsV0::Blue),
+                (LegMode::DigitigradePartial, MagicPixelsV0::Green),
+                (LegMode::DigitigradeFull, MagicPixelsV0::Pink),
+            ],
+        )?;
+
+        let bitflags = features.tail.map_or(1, |tail| {
+            tail.animate as u32 | (tail.swap_jacket_back as u32) << 1
+        });
+        write_raw_magic_pixel(image, 12, bitflags)?;
 
         write_raw_magic_pixel(
             image,
@@ -206,15 +228,15 @@ fn write_wing_data(image: &mut RgbaImage, wing: &WingData) -> Result<()> {
         return Ok(());
     }
 
-    write_raw_magic_pixel(
+    write_magic_pixel(
         image,
         9,
-        if wing.animated {
-            MagicPixelsV0::Blue
-        } else {
-            MagicPixelsV0::Red
-        }
-        .get_hex(),
+        wing.animation_mode,
+        [
+            (WingAnimationMode::Normal, MagicPixelsV0::Blue),
+            (WingAnimationMode::None, MagicPixelsV0::Red),
+            (WingAnimationMode::NoFlight, MagicPixelsV0::Green),
+        ],
     )?;
 
     Ok(())
@@ -227,13 +249,21 @@ mod tests {
         path::PathBuf,
     };
 
-    use image::{Rgba, RgbaImage};
+    use image::RgbaImage;
 
     use crate::{
-        features::{data::tail::TailMode, EarsFeatures},
+        features::{
+            EarsFeatures,
+            data::{
+                leg::LegMode,
+                protrusions::Protrusions,
+                tail::{TailData, TailMode},
+                wing::{WingAnimationMode, WingData, WingMode},
+            },
+        },
         parser::{
-            v0::{parser::EarsParserV0, writer::EarsWriterV0},
             EarsFeaturesParser, EarsFeaturesWriter,
+            v0::{parser::EarsParserV0, writer::EarsWriterV0},
         },
     };
 
@@ -355,8 +385,8 @@ mod tests {
         assert_eq!(features2.tail, features.tail);
         assert_eq!(features2.snout, features.snout);
         assert_eq!(features2.wing, features.wing);
-        assert_eq!(features2.claws, features.claws);
-        assert_eq!(features2.horn, features.horn);
+        assert_eq!(features2.protrusions, features.protrusions);
+        assert_eq!(features2.leg_mode, features.leg_mode);
         assert_eq!(features2.chest_size, features.chest_size);
         assert_eq!(features2.cape_enabled, features.cape_enabled);
         assert_eq!(features2.emissive, features.emissive);
@@ -371,8 +401,32 @@ mod tests {
         assert_eq!(snout2.height, snout.height);
         assert_eq!(snout2.depth, snout.depth);
 
-        assert_eq!(wing2.mode, wing.mode);
-        assert_eq!(wing2.animated, wing.animated);
+        assert_eq!(wing2.animation_mode, wing.animation_mode);
+    }
+
+    #[test]
+    fn v0_roundtrip_preserves_new_feature_data() {
+        let features = EarsFeatures {
+            tail: Some(TailData {
+                mode: TailMode::Down,
+                segments: 1,
+                bends: [0.0; 4],
+                animate: false,
+                swap_jacket_back: true,
+            }),
+            wing: Some(WingData {
+                mode: WingMode::Flat,
+                animation_mode: WingAnimationMode::NoFlight,
+            }),
+            protrusions: Protrusions::ClawsAndDoubleHalo,
+            leg_mode: LegMode::DigitigradeFull,
+            ..Default::default()
+        };
+
+        let mut image = RgbaImage::new(64, 64);
+        EarsWriterV0::write(&mut image, &features).unwrap();
+
+        assert_eq!(EarsParserV0::parse(&image).unwrap(), Some(features));
     }
 
     #[test]

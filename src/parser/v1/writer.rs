@@ -2,10 +2,14 @@ use std::io::{Cursor, Write};
 
 use crate::{
     features::{
-        data::{ear::EarMode, tail::TailMode, wing::WingMode},
         EarsFeatures,
+        data::{
+            ear::EarMode,
+            tail::TailMode,
+            wing::{WingAnimationMode, WingMode},
+        },
     },
-    parser::{utils::from_argb_hex, EarsFeaturesWriter},
+    parser::{EarsFeaturesWriter, utils::from_argb_hex},
     utils::{bit_writer::BitWriter, errors::Result},
 };
 use enum_ordinalize::Ordinalize;
@@ -14,7 +18,7 @@ pub struct EarsWriterV1;
 
 impl EarsWriterV1 {
     fn write_features<W: Write>(feat: &EarsFeatures, writer: &mut BitWriter<W>) -> Result<()> {
-        writer.write_long(8, 0)?; // version
+        writer.write_long(8, 3)?; // version
 
         let ears = if feat.ear_mode == EarMode::None {
             0u64
@@ -26,15 +30,16 @@ impl EarsWriterV1 {
 
         writer.write_long(6, ears)?;
 
-        writer.write_bool(feat.claws)?;
-        writer.write_bool(feat.horn)?;
+        writer.write_long(2, feat.protrusions.ordinal() as u64 & 0b11)?;
 
+        let tail_mode = feat.tail.map(|tail| tail.mode).unwrap_or(TailMode::None);
         writer.write_long(
             3,
-            feat.tail
-                .map(|t| t.mode)
-                .unwrap_or(TailMode::None)
-                .ordinal() as u64,
+            if tail_mode.ordinal() > 6 {
+                7
+            } else {
+                tail_mode.ordinal() as u64
+            },
         )?;
 
         if let Some(tail) = feat.tail {
@@ -71,21 +76,35 @@ impl EarsWriterV1 {
 
         writer.write_unit(5, feat.chest_size)?;
 
-        writer.write_long(
-            3,
-            feat.wing.map(|w| w.mode).unwrap_or(WingMode::None) as u64,
-        )?;
+        let wing_mode = feat.wing.map(|wing| wing.mode).unwrap_or(WingMode::None);
+        writer.write_long(3, wing_mode.ordinal() as u64)?;
 
-        if let Some(animated) = feat
-            .wing
-            .map(|w| w.animated)
-            .filter(|_| feat.wing.is_some_and(|w| w.mode != WingMode::None))
-        {
-            writer.write_bool(animated)?;
+        if wing_mode != WingMode::None {
+            writer.write_bool(
+                feat.wing
+                    .is_some_and(|wing| wing.animation_mode == WingAnimationMode::Normal),
+            )?;
         }
 
         writer.write_bool(feat.cape_enabled)?;
         writer.write_bool(feat.emissive)?;
+
+        if tail_mode.ordinal() > 6 {
+            writer.write_long(3, (tail_mode.ordinal() - 7) as u64)?;
+        }
+
+        writer.write_long(3, feat.leg_mode.ordinal() as u64)?;
+        if wing_mode != WingMode::None {
+            writer.write_long(
+                3,
+                feat.wing
+                    .map(|wing| wing.animation_mode.ordinal() as u64)
+                    .unwrap_or(WingAnimationMode::Normal.ordinal() as u64),
+            )?;
+        }
+        writer.write_bool(feat.tail.is_none_or(|tail| tail.animate))?;
+        writer.write_bool(feat.tail.is_some_and(|tail| tail.swap_jacket_back))?;
+        writer.write_long(2, feat.protrusions.ordinal() as u64 >> 2)?;
 
         writer.align()?;
 
@@ -134,8 +153,11 @@ mod tests {
 
     use super::*;
     use crate::{
-        features::data::{ear::EarAnchor, snout::SnoutData, tail::TailData, wing::WingData},
-        parser::{v1::parser::EarsParserV1, EarsFeaturesParser},
+        features::data::{
+            ear::EarAnchor, leg::LegMode, protrusions::Protrusions, snout::SnoutData,
+            tail::TailData, wing::WingData,
+        },
+        parser::{EarsFeaturesParser, v1::parser::EarsParserV1},
     };
 
     #[test]
@@ -147,6 +169,8 @@ mod tests {
                 mode: TailMode::Down,
                 segments: 2,
                 bends: [-10.0, -14.285715, 0.0, 0.0],
+                animate: true,
+                swap_jacket_back: false,
             }),
             snout: Some(SnoutData {
                 offset: 1,
@@ -155,8 +179,8 @@ mod tests {
                 depth: 2,
             }),
             wing: None,
-            claws: true,
-            horn: false,
+            protrusions: Protrusions::Claws,
+            leg_mode: LegMode::Plantigrade,
             chest_size: 0.0,
             cape_enabled: true,
             emissive: false,
@@ -172,7 +196,7 @@ mod tests {
 
         Ok(())
     }
-    
+
     #[test]
     fn v1_roundtrip_write_works_with_new_data() -> Result<()> {
         let features = EarsFeatures {
@@ -182,6 +206,8 @@ mod tests {
                 mode: TailMode::StarOverlap,
                 segments: 2,
                 bends: [-10.0, -14.285715, 0.0, 0.0],
+                animate: true,
+                swap_jacket_back: false,
             }),
             snout: Some(SnoutData {
                 offset: 1,
@@ -193,8 +219,8 @@ mod tests {
                 mode: WingMode::Flat,
                 ..Default::default()
             }),
-            claws: true,
-            horn: false,
+            protrusions: Protrusions::Claws,
+            leg_mode: LegMode::Plantigrade,
             chest_size: 0.0,
             cape_enabled: true,
             emissive: false,
@@ -206,7 +232,35 @@ mod tests {
         EarsWriterV1::write(&mut image, &features)?;
         let result = EarsParserV1::parse(&image)?;
 
-        assert_ne!(result, Some(features));
+        assert_eq!(result, Some(features));
+
+        Ok(())
+    }
+
+    #[test]
+    fn v1_roundtrip_preserves_extended_feature_data() -> Result<()> {
+        let features = EarsFeatures {
+            tail: Some(TailData {
+                mode: TailMode::StarOverlap,
+                segments: 1,
+                bends: [0.0; 4],
+                animate: false,
+                swap_jacket_back: true,
+            }),
+            wing: Some(WingData {
+                mode: WingMode::Flat,
+                animation_mode: WingAnimationMode::NoFlight,
+            }),
+            protrusions: Protrusions::ClawsAndDoubleHalo,
+            leg_mode: LegMode::DigitigradeFull,
+            data_version: 1,
+            ..Default::default()
+        };
+
+        let mut image = RgbaImage::new(64, 64);
+        EarsWriterV1::write(&mut image, &features)?;
+
+        assert_eq!(EarsParserV1::parse(&image)?, Some(features));
 
         Ok(())
     }

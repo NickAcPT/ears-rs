@@ -1,17 +1,17 @@
 [package]
 name = "ears-rs"
 description = "A Rust based library to read Ears mod data from Minecraft skins"
-version = "0.2.0"
-edition = "2021"
+version = "0.2.1"
+edition = "2024"
 authors = ["NickAcPT"]
 
 [dependencies]
 image = { version = "^0.25", default-features = false }
 ibig = "^0.3"
-itertools = "^0.14"
+itertools = "^0.15.0"
 thiserror = "^2"
-enum-ordinalize = "4.3.0"
+enum-ordinalize = "4.4.2"
 byteorder = "1.5.0"
 
 [dev-dependencies]
-image = { version = "0.25.0", default-features = false, features = ["png"] }
+image = { version = "0.25.10", default-features = false, features = ["png"] }
