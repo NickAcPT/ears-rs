@@ -2,7 +2,7 @@ use image::RgbaImage;
 
 use crate::features::{EarsFeatures, data::leg::LegMode};
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub(crate) struct Rectangle {
     pub x1: u32,
     pub y1: u32,
