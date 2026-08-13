@@ -54,7 +54,7 @@ fn copy_displaced_regions(image: &RgbaImage, regions: &[Rectangle]) -> RgbaImage
     displaced
 }
 
-fn swap_jacket_back_and_tail(image: &mut RgbaImage) {
+pub fn swap_jacket_back_and_tail(image: &mut RgbaImage) {
     const TAIL_X: u32 = 56;
     const TAIL_Y: u32 = 16;
     const JACKET_X: u32 = 32;
