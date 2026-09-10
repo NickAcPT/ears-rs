@@ -2,21 +2,19 @@ use image::RgbaImage;
 
 use crate::{
     features::{EarsFeatures, data::leg::LegMode},
-    utils::alpha::{LEG_BOTTOM_HALF_REGIONS, LEG_REGIONS, Rectangle},
+    utils::alpha::displaced_regions,
 };
 
 pub fn apply_erase_displaced_regions(
     image: &mut RgbaImage,
     features: &EarsFeatures,
 ) -> crate::utils::errors::Result<()> {
-    let regions = match features.leg_mode {
-        LegMode::Plantigrade => return Ok(()),
-        LegMode::DigitigradePartial => LEG_BOTTOM_HALF_REGIONS,
-        LegMode::DigitigradeFull => LEG_REGIONS,
-    };
-    for region in regions {
-        for y in region.y1..region.y2 {
-            for x in region.x1..region.x2 {
+    if matches!(features.leg_mode, LegMode::Plantigrade) {
+        return Ok(());
+    }
+    for region in displaced_regions(features.leg_mode) {
+        for y in region.y..region.y + region.height {
+            for x in region.x..region.x + region.width {
                 if let Some(pixel) = image.get_pixel_mut_checked(x, y) {
                     *pixel = image::Rgba([0, 0, 0, 0]);
                 }
@@ -27,26 +25,22 @@ pub fn apply_erase_displaced_regions(
 }
 
 pub fn extract_displaced_skin(image: &RgbaImage, features: &EarsFeatures) -> Option<RgbaImage> {
-    let regions = match features.leg_mode {
-        LegMode::Plantigrade => return None,
-        LegMode::DigitigradePartial => LEG_BOTTOM_HALF_REGIONS,
-        LegMode::DigitigradeFull => LEG_REGIONS,
-    };
+    if matches!(features.leg_mode, LegMode::Plantigrade) {
+        return None;
+    }
 
-    Some(copy_displaced_regions(image, regions))
+    Some(copy_displaced_regions(image, features.leg_mode))
 }
 
-fn copy_displaced_regions(image: &RgbaImage, regions: &[Rectangle]) -> RgbaImage {
+fn copy_displaced_regions(image: &RgbaImage, leg_mode: LegMode) -> RgbaImage {
     let mut displaced = RgbaImage::new(64, 64);
-    for region in regions {
-        for y in region.y1..region.y2 {
-            for x in region.x1..region.x2 {
+    for region in displaced_regions(leg_mode) {
+        for y in region.y..region.y + region.height {
+            for x in region.x..region.x + region.width {
                 let Some(mut pixel) = image.get_pixel_checked(x, y).copied() else {
                     continue;
                 };
-                if region.force_opaque {
-                    pixel.0[3] = u8::MAX;
-                }
+                pixel.0[3] = u8::MAX;
                 displaced.put_pixel(x, y, pixel);
             }
         }
@@ -114,7 +108,7 @@ mod tests {
     }
 
     #[test]
-    fn extract_displaced_skin_preserves_partial_digitigrade_source_pixels() {
+    fn extract_displaced_skin_excludes_pant_layers_for_partial_digitigrade() {
         let mut image = digitigrade_skin(LegMode::DigitigradePartial);
         image.put_pixel(24, 48, Rgba([1, 2, 3, 4]));
         image.put_pixel(8, 32, Rgba([5, 6, 7, 8]));
@@ -125,11 +119,11 @@ mod tests {
 
         assert_eq!(image, original);
         assert_eq!(*displaced.get_pixel(24, 48), Rgba([1, 2, 3, 255]));
-        assert_eq!(*displaced.get_pixel(8, 32), Rgba([5, 6, 7, 8]));
+        assert_eq!(*displaced.get_pixel(8, 32), Rgba([0, 0, 0, 0]));
     }
 
     #[test]
-    fn extract_displaced_skin_preserves_full_digitigrade_source_pixels() {
+    fn extract_displaced_skin_excludes_pant_layers_for_full_digitigrade() {
         let mut image = digitigrade_skin(LegMode::DigitigradeFull);
         image.put_pixel(20, 48, Rgba([1, 2, 3, 4]));
         image.put_pixel(4, 32, Rgba([5, 6, 7, 8]));
@@ -140,7 +134,7 @@ mod tests {
 
         assert_eq!(image, original);
         assert_eq!(*displaced.get_pixel(20, 48), Rgba([1, 2, 3, 255]));
-        assert_eq!(*displaced.get_pixel(4, 32), Rgba([5, 6, 7, 8]));
+        assert_eq!(*displaced.get_pixel(4, 32), Rgba([0, 0, 0, 0]));
     }
 
     #[test]
@@ -211,12 +205,12 @@ mod tests {
             let mut displaced_image = extract_displaced_skin(&image, &features).unwrap();
 
             assert_eq!(features.leg_mode, leg_mode);
+            let actual_emissive = apply_emissive_palette(&mut displaced_image, &palette).unwrap();
             assert_image_eq(
                 &displaced_image,
                 &image::open(displaced).unwrap().to_rgba8(),
                 displaced,
             );
-            let actual_emissive = apply_emissive_palette(&mut displaced_image, &palette).unwrap();
             assert_image_eq(
                 &actual_emissive,
                 &image::open(emissive_displaced).unwrap().to_rgba8(),
