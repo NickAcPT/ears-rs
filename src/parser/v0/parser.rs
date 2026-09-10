@@ -115,7 +115,8 @@ fn read_wing_data(image: &RgbaImage) -> Result<Option<WingData>> {
     let animation_mode = read_magic_pixel!(
         image, 9, WingAnimationMode::Normal,
         MagicPixelsV0::Red => WingAnimationMode::None,
-        MagicPixelsV0::Green => WingAnimationMode::NoFlight
+        MagicPixelsV0::Green => WingAnimationMode::NoFlight,
+        MagicPixelsV0::Pink => WingAnimationMode::FlightOnly
     )?;
 
     Ok(Some(WingData {
@@ -351,6 +352,23 @@ mod tests {
 
             assert_eq!(wing.mode, mode);
         }
+    }
+
+    #[test]
+    fn v0_parses_flight_only_wing_animation_fixture() {
+        let image = image::open("test_images/ears_v0_flight_only.png")
+            .unwrap()
+            .to_rgba8();
+
+        let features = EarsParserV0::parse(&image).unwrap().unwrap();
+
+        assert_eq!(
+            features.wing,
+            Some(WingData {
+                mode: WingMode::SymmetricDual,
+                animation_mode: WingAnimationMode::FlightOnly,
+            })
+        );
     }
 
     #[test]

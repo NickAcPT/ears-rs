@@ -236,6 +236,7 @@ fn write_wing_data(image: &mut RgbaImage, wing: &WingData) -> Result<()> {
             (WingAnimationMode::Normal, MagicPixelsV0::Blue),
             (WingAnimationMode::None, MagicPixelsV0::Red),
             (WingAnimationMode::NoFlight, MagicPixelsV0::Green),
+            (WingAnimationMode::FlightOnly, MagicPixelsV0::Pink),
         ],
     )?;
 

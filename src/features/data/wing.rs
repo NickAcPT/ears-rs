@@ -12,6 +12,7 @@ pub enum WingAnimationMode {
     Normal,
     None,
     NoFlight,
+    FlightOnly,
 }
 
 #[derive(Ordinalize, Debug, PartialEq, Eq, Clone, Copy, Hash, Default)]
