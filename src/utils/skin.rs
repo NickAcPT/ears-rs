@@ -233,6 +233,34 @@ mod tests {
         assert_eq!(image.get_pixel(20, 16).0[3], 255);
     }
 
+    #[test]
+    fn supplied_digitigrade_skin_matches_thermite_alpha_and_displacement() {
+        let original = image::open("test_images/five_attachment_original.png")
+            .unwrap()
+            .to_rgba8();
+        let features = EarsParser::parse(&original).unwrap().unwrap();
+        assert_eq!(features.leg_mode, LegMode::DigitigradePartial);
+
+        let mut alpha_stripped = original.clone();
+        strip_alpha_for_features(&mut alpha_stripped, Some(&features));
+        assert_image_eq(
+            &alpha_stripped,
+            &image::open("test_images/five_attachment_thermite_alpha_stripped.png")
+                .unwrap()
+                .to_rgba8(),
+            "test_images/five_attachment_thermite_alpha_stripped.png",
+        );
+
+        let displaced = extract_displaced_skin(&alpha_stripped, &features).unwrap();
+        assert_image_eq(
+            &displaced,
+            &image::open("test_images/five_attachment_thermite_displaced.png")
+                .unwrap()
+                .to_rgba8(),
+            "test_images/five_attachment_thermite_displaced.png",
+        );
+    }
+
     fn assert_image_eq(actual: &RgbaImage, expected: &RgbaImage, expected_path: &str) {
         for ((x, y, actual_pixel), (_, _, expected_pixel)) in
             actual.enumerate_pixels().zip(expected.enumerate_pixels())
