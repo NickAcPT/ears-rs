@@ -20,6 +20,7 @@ pub enum AlfalfaDataKey {
     Erase,
     Cape,
     Wings,
+    Locator,
     Custom(&'static str),
 }
 
@@ -29,6 +30,7 @@ impl From<AlfalfaDataKey> for &'static str {
             AlfalfaDataKey::Erase => "erase",
             AlfalfaDataKey::Cape => "cape",
             AlfalfaDataKey::Wings => "wing",
+            AlfalfaDataKey::Locator => "locator",
             AlfalfaDataKey::Custom(key) => key,
         }
     }
