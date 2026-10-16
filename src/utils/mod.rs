@@ -13,7 +13,7 @@ mod skin;
 
 pub use alpha::{strip_alpha, strip_alpha_for_features};
 pub use cape::convert_ears_cape_to_mojang_cape;
-pub use eraser::process_erase_regions;
+pub use eraser::{apply_erase_regions, process_erase_regions};
 pub use legacy_upgrader::upgrade_skin_if_needed;
 pub use locator::{LOCATOR_ATLAS_HEIGHT, LOCATOR_ATLAS_WIDTH, extract_locator_sprites};
 pub use skin::{apply_erase_displaced_regions, extract_displaced_skin, swap_jacket_back_and_tail};

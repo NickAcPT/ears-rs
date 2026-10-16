@@ -11,7 +11,7 @@ pub fn process_erase_regions(image: &mut RgbaImage) -> Result<()> {
     Ok(())
 }
 
-pub(crate) fn apply_erase_regions(
+pub fn apply_erase_regions(
     image: &mut RgbaImage,
     alfalfa: &crate::alfalfa::AlfalfaData,
 ) -> Result<()> {
