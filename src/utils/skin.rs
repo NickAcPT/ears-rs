@@ -37,10 +37,9 @@ fn copy_displaced_regions(image: &RgbaImage, leg_mode: LegMode) -> RgbaImage {
     for region in displaced_regions(leg_mode) {
         for y in region.y..region.y + region.height {
             for x in region.x..region.x + region.width {
-                let Some(mut pixel) = image.get_pixel_checked(x, y).copied() else {
+                let Some(pixel) = image.get_pixel_checked(x, y).copied() else {
                     continue;
                 };
-                pixel.0[3] = u8::MAX;
                 displaced.put_pixel(x, y, pixel);
             }
         }
@@ -108,7 +107,7 @@ mod tests {
     }
 
     #[test]
-    fn extract_displaced_skin_excludes_pant_layers_for_partial_digitigrade() {
+    fn extract_displaced_skin_includes_pant_layers_for_partial_digitigrade() {
         let mut image = digitigrade_skin(LegMode::DigitigradePartial);
         image.put_pixel(24, 48, Rgba([1, 2, 3, 4]));
         image.put_pixel(8, 32, Rgba([5, 6, 7, 8]));
@@ -118,12 +117,12 @@ mod tests {
         let displaced = extract_displaced_skin(&image, &features).unwrap();
 
         assert_eq!(image, original);
-        assert_eq!(*displaced.get_pixel(24, 48), Rgba([1, 2, 3, 255]));
-        assert_eq!(*displaced.get_pixel(8, 32), Rgba([0, 0, 0, 0]));
+        assert_eq!(*displaced.get_pixel(24, 48), Rgba([1, 2, 3, 4]));
+        assert_eq!(*displaced.get_pixel(8, 32), Rgba([5, 6, 7, 8]));
     }
 
     #[test]
-    fn extract_displaced_skin_excludes_pant_layers_for_full_digitigrade() {
+    fn extract_displaced_skin_includes_pant_layers_for_full_digitigrade() {
         let mut image = digitigrade_skin(LegMode::DigitigradeFull);
         image.put_pixel(20, 48, Rgba([1, 2, 3, 4]));
         image.put_pixel(4, 32, Rgba([5, 6, 7, 8]));
@@ -133,8 +132,8 @@ mod tests {
         let displaced = extract_displaced_skin(&image, &features).unwrap();
 
         assert_eq!(image, original);
-        assert_eq!(*displaced.get_pixel(20, 48), Rgba([1, 2, 3, 255]));
-        assert_eq!(*displaced.get_pixel(4, 32), Rgba([0, 0, 0, 0]));
+        assert_eq!(*displaced.get_pixel(20, 48), Rgba([1, 2, 3, 4]));
+        assert_eq!(*displaced.get_pixel(4, 32), Rgba([5, 6, 7, 8]));
     }
 
     #[test]
