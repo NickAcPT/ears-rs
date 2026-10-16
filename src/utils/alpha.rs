@@ -24,10 +24,14 @@ impl SkinRegion {
 
     const fn displaced_by(self, leg_mode: LegMode) -> bool {
         match self.kind {
-            SkinRegionKind::LegSideTopHalf | SkinRegionKind::LegTop => {
-                matches!(leg_mode, LegMode::DigitigradeFull)
-            }
-            SkinRegionKind::LegSideBottomHalf | SkinRegionKind::LegBottom => {
+            SkinRegionKind::LegSideTopHalf
+            | SkinRegionKind::LegTop
+            | SkinRegionKind::PantSideTopHalf
+            | SkinRegionKind::PantTop => matches!(leg_mode, LegMode::DigitigradeFull),
+            SkinRegionKind::LegSideBottomHalf
+            | SkinRegionKind::LegBottom
+            | SkinRegionKind::PantSideBottomHalf
+            | SkinRegionKind::PantBottom => {
                 !matches!(leg_mode, LegMode::Plantigrade)
             }
             _ => false,
