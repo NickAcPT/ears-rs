@@ -75,7 +75,7 @@ const ENCODE_REGIONS: [Rectangle; 10] = [
 ];
 
 const MAGIC: u32 = 0xEA1FA1FA; // EALFALFA
-const PREDEF_KEYS: [&str; 4] = ["END", "wing", "erase", "cape"];
+const PREDEF_KEYS: [&str; 5] = ["END", "wing", "erase", "cape", "locator"];
 
 pub fn read_alfalfa(image: &RgbaImage) -> Result<Option<AlfalfaData>> {
     let Some(data) = decode_alfalfa(image)? else {
@@ -314,6 +314,23 @@ mod tests {
 
         assert_eq!(map, out_map);
 
+        Ok(())
+    }
+
+    #[test]
+    fn alfalfa_encodes_locator_with_predefined_key() -> Result<()> {
+        let data = AlfalfaData {
+            version: 1,
+            data: HashMap::from([("locator".to_string(), vec![1, 2, 3])]),
+        };
+        let mut encoded = Vec::new();
+
+        encode_alfalfa(&data, &mut encoded)?;
+
+        assert_eq!(
+            encoded,
+            vec![0xEA, 0x1F, 0xA1, 0xFA, 1, 4, 3, 1, 2, 3, 0]
+        );
         Ok(())
     }
 
